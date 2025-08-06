@@ -1,8 +1,6 @@
 import { Product, StoreConfig } from "@/types";
 
-export async function getStoreData(
-  slug: string
-): Promise<{ products: Product[]; config: StoreConfig }> {
+export async function getProducts(): Promise<Product[]> {
   // Simula productos (luego se traerán de NestJS)
   const products: Product[] = [
     {
@@ -34,7 +32,45 @@ export async function getStoreData(
       freeShipping: false,
       quantity: 50,
     },
+    {
+      id: "3",
+      name: "Casual Sneakers",
+      price: 79,
+      originalPrice: 99,
+      image: "/placeholder.svg?text=Sneakers",
+      description: "Zapatillas cómodas para uso diario",
+      category: "Calzado",
+      inStock: true,
+      createdAt: new Date(),
+      rating: 4.3,
+      reviews: 95,
+      freeShipping: true,
+      quantity: 75,
+    },
+    {
+      id: "4",
+      name: "Classic Watch",
+      price: 149,
+      image: "/placeholder.svg?text=Watch",
+      description: "Reloj clásico de acero inoxidable",
+      category: "Accesorios",
+      inStock: true,
+      createdAt: new Date(),
+      rating: 4.7,
+      reviews: 210,
+      freeShipping: true,
+      quantity: 30,
+    },
   ];
+
+  return products;
+}
+
+// Función de compatibilidad temporal (se puede eliminar más tarde)
+export async function getStoreData(
+  slug: string
+): Promise<{ products: Product[]; config: StoreConfig }> {
+  const products = await getProducts();
 
   // Simula configuración de tienda
   const config: StoreConfig = {

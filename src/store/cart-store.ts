@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { Product } from "@/types";
 
 export interface CartItem {
@@ -8,47 +9,66 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
+  isHydrated: boolean;
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
   getTotalItems: () => number;
-  getTotalPrice: () => number; // <- Esta línea es clave
+  getTotalPrice: () => number;
+  setHydrated: () => void;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      isHydrated: false,
 
-  addItem: (product) => {
-    const items = get().items;
-    const existing = items.find((item) => item.product.id === product.id);
+      setHydrated: () => set({ isHydrated: true }),
 
-    if (existing) {
-      const updated = items.map((item) =>
-        item.product.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      );
-      set({ items: updated });
-    } else {
-      set({ items: [...items, { product, quantity: 1 }] });
+      addItem: (product) => {
+        const items = get().items;
+        const existing = items.find((item) => item.product.id === product.id);
+
+        if (existing) {
+          const updated = items.map((item) =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+          set({ items: updated });
+        } else {
+          set({ items: [...items, { product, quantity: 1 }] });
+        }
+      },
+
+      removeItem: (productId) => {
+        const updated = get().items.filter(
+          (item) => item.product.id !== productId
+        );
+        set({ items: updated });
+      },
+
+      clearCart: () => set({ items: [] }),
+
+      getTotalItems: () => {
+        return get().items.reduce((total, item) => total + item.quantity, 0);
+      },
+
+      getTotalPrice: () => {
+        return get().items.reduce(
+          (total, item) => total + item.quantity * item.product.price,
+          0
+        );
+      },
+    }),
+    {
+      name: "cart-storage",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ items: state.items }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
+      },
     }
-  },
-
-  removeItem: (productId) => {
-    const updated = get().items.filter((item) => item.product.id !== productId);
-    set({ items: updated });
-  },
-
-  clearCart: () => set({ items: [] }),
-
-  getTotalItems: () => {
-    return get().items.reduce((total, item) => total + item.quantity, 0);
-  },
-
-  getTotalPrice: () => {
-    return get().items.reduce(
-      (total, item) => total + item.quantity * item.product.price,
-      0
-    );
-  },
-}));
+  )
+);
