@@ -19,7 +19,7 @@ interface CategoryFormProps {
 
 export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const [selectedParent, setSelectedParent] = useState<string>(category?.parentId || '')
+    const [selectedParent, setSelectedParent] = useState<string>(category?.parentId || 'none')
     const { addCategory, updateCategory, getParentCategories } = useCategoryStore()
     const parentCategories = getParentCategories()
 
@@ -37,7 +37,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
             imageUrl: category.imageUrl || '',
             isActive: category.isActive,
             order: category.order,
-            parentId: category.parentId || ''
+            parentId: category.parentId || 'none'
         } : {
             name: '',
             slug: '',
@@ -45,7 +45,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
             imageUrl: '',
             isActive: true,
             order: 1,
-            parentId: ''
+            parentId: 'none'
         }
     })
 
@@ -69,7 +69,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
         try {
             const categoryData = {
                 ...data,
-                parentId: selectedParent || undefined
+                parentId: selectedParent === 'none' ? undefined : selectedParent
             }
 
             if (category) {
@@ -79,7 +79,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
             }
 
             reset()
-            setSelectedParent('')
+            setSelectedParent('none')
             setIsOpen(false)
             onSuccess?.()
         } catch (error) {
@@ -97,114 +97,125 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
                 )}
             </DialogTrigger>
 
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>
-                        {category ? 'Editar Categoría' : 'Crear Nueva Categoría'}
-                    </DialogTitle>
-                </DialogHeader>
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden p-0">
+                <div className="flex flex-col h-full">
+                    <DialogHeader className="px-6 py-4 border-b">
+                        <DialogTitle className="text-xl font-semibold">
+                            {category ? 'Editar Categoría' : 'Crear Nueva Categoría'}
+                        </DialogTitle>
+                    </DialogHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Nombre *</Label>
-                            <Input
-                                id="name"
-                                {...register('name', {
-                                    required: 'El nombre es requerido',
-                                    onChange: handleNameChange
-                                })}
-                                placeholder="Nombre de la categoría"
-                            />
-                            {errors.name && (
-                                <p className="text-sm text-red-500">{errors.name.message}</p>
-                            )}
+                    <div className="flex-1 overflow-y-auto px-6 py-4">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" id="category-form">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Nombre *</Label>
+                                    <Input
+                                        id="name"
+                                        {...register('name', {
+                                            required: 'El nombre es requerido',
+                                            onChange: handleNameChange
+                                        })}
+                                        placeholder="Nombre de la categoría"
+                                    />
+                                    {errors.name && (
+                                        <p className="text-sm text-red-500">{errors.name.message}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="slug">Slug *</Label>
+                                    <Input
+                                        id="slug"
+                                        {...register('slug', { required: 'El slug es requerido' })}
+                                        placeholder="slug-de-categoria"
+                                    />
+                                    {errors.slug && (
+                                        <p className="text-sm text-red-500">{errors.slug.message}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Descripción</Label>
+                                <Textarea
+                                    id="description"
+                                    {...register('description')}
+                                    placeholder="Descripción de la categoría"
+                                    rows={3}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="imageUrl">URL de Imagen</Label>
+                                <Input
+                                    id="imageUrl"
+                                    {...register('imageUrl')}
+                                    placeholder="https://ejemplo.com/imagen.jpg"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="parentId">Categoría Padre</Label>
+                                    <Select value={selectedParent} onValueChange={setSelectedParent}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccionar categoría padre (opcional)" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin categoría padre</SelectItem>
+                                            {parentCategories.map((parent) => (
+                                                <SelectItem key={parent.id} value={parent.id}>
+                                                    {parent.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="order">Orden</Label>
+                                    <Input
+                                        id="order"
+                                        type="number"
+                                        {...register('order', { valueAsNumber: true })}
+                                        placeholder="1"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                                <input
+                                    id="isActive"
+                                    type="checkbox"
+                                    {...register('isActive')}
+                                    className="h-4 w-4 rounded border-gray-300"
+                                />
+                                <Label htmlFor="isActive">Categoría activa</Label>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Botones de acción - Fixed footer */}
+                    <div className="border-t px-6 py-4 bg-gray-50">
+                        <div className="flex justify-end space-x-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="category-form"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Guardando...' : (category ? 'Actualizar' : 'Crear')}
+                            </Button>
                         </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="slug">Slug *</Label>
-                            <Input
-                                id="slug"
-                                {...register('slug', { required: 'El slug es requerido' })}
-                                placeholder="slug-de-categoria"
-                            />
-                            {errors.slug && (
-                                <p className="text-sm text-red-500">{errors.slug.message}</p>
-                            )}
-                        </div>
                     </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="description">Descripción</Label>
-                        <Textarea
-                            id="description"
-                            {...register('description')}
-                            placeholder="Descripción de la categoría"
-                            rows={3}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="imageUrl">URL de Imagen</Label>
-                        <Input
-                            id="imageUrl"
-                            {...register('imageUrl')}
-                            placeholder="https://ejemplo.com/imagen.jpg"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="parentId">Categoría Padre</Label>
-                            <Select value={selectedParent} onValueChange={setSelectedParent}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar categoría padre (opcional)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">Sin categoría padre</SelectItem>
-                                    {parentCategories.map((parent) => (
-                                        <SelectItem key={parent.id} value={parent.id}>
-                                            {parent.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="order">Orden</Label>
-                            <Input
-                                id="order"
-                                type="number"
-                                {...register('order', { valueAsNumber: true })}
-                                placeholder="1"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                        <input
-                            id="isActive"
-                            type="checkbox"
-                            {...register('isActive')}
-                            className="h-4 w-4 rounded border-gray-300"
-                        />
-                        <Label htmlFor="isActive">Categoría activa</Label>
-                    </div>
-
-                    <div className="flex justify-end space-x-2 pt-4">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Guardando...' : (category ? 'Actualizar' : 'Crear')}
-                        </Button>
-                    </div>
-                </form>
+                </div>
             </DialogContent>
         </Dialog>
     )

@@ -149,6 +149,20 @@ export const useBannerStore = create<BannerState>()(
       storage: createJSONStorage(() => localStorage),
       // Avoid hydration issues by only persisting essential data
       partialize: (state) => ({ banners: state.banners }),
+      // Handle Date serialization/deserialization
+      onRehydrateStorage: () => (state) => {
+        if (state?.banners) {
+          state.banners = state.banners.map((banner) => ({
+            ...banner,
+            createdAt: new Date(banner.createdAt),
+            updatedAt: new Date(banner.updatedAt),
+            startDate: banner.startDate
+              ? new Date(banner.startDate)
+              : undefined,
+            endDate: banner.endDate ? new Date(banner.endDate) : undefined,
+          }));
+        }
+      },
     }
   )
 );

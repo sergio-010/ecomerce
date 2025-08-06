@@ -1,47 +1,42 @@
 "use client"
 
-import { AdminLayout } from "@/components/admin/AdminLayout"
+import { AdminLayout, ProductForm } from "@/components/admin"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PlusCircle, Edit, Trash2, Eye, Package } from "lucide-react"
-import { getProducts } from "@/lib"
-import { useState, useEffect } from "react"
+import { useProductStore } from "@/store/product-store"
+import { useCategoryStore } from "@/store/category-store"
+import { useState } from "react"
 import { Product } from "@/types"
 import Image from "next/image"
 
 export default function AdminProductsPage() {
-    const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                const productList = await getProducts()
-                setProducts(productList)
-            } catch (error) {
-                console.error("Error loading products:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        loadProducts()
-    }, [])
+    const [selectedProduct, setSelectedProduct] = useState<Product | undefined>()
+    const [showForm, setShowForm] = useState(false)
+    const { products, deleteProduct, getProductById } = useProductStore()
+    const { getCategoryById } = useCategoryStore()
 
     const handleEdit = (id: string) => {
-        console.log("Editar producto:", id)
-        // Aquí navegarías a la página de edición
+        const product = getProductById(id)
+        setSelectedProduct(product)
+        setShowForm(true)
     }
 
     const handleDelete = (id: string) => {
-        console.log("Eliminar producto:", id)
-        // Aquí mostrarías un modal de confirmación
+        if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
+            deleteProduct(id)
+        }
     }
 
     const handleView = (id: string) => {
         console.log("Ver producto:", id)
         // Aquí navegarías a la vista del producto
+    }
+
+    const handleFormSuccess = () => {
+        setSelectedProduct(undefined)
+        setShowForm(false)
     }
 
     return (
@@ -57,22 +52,26 @@ export default function AdminProductsPage() {
                             Gestiona el catálogo de productos de tu tienda
                         </p>
                     </div>
-                    <Button className="gap-2">
-                        <PlusCircle className="h-4 w-4" />
-                        Nuevo producto
-                    </Button>
+                    <ProductForm
+                        product={selectedProduct}
+                        open={showForm}
+                        onOpenChange={setShowForm}
+                        onSuccess={handleFormSuccess}
+                        trigger={
+                            <Button className="gap-2" onClick={() => {
+                                setSelectedProduct(undefined)
+                                setShowForm(true)
+                            }}>
+                                <PlusCircle className="h-4 w-4" />
+                                Nuevo producto
+                            </Button>
+                        }
+                    />
                 </div>
 
                 {/* Table Card */}
                 <div className="rounded-lg border bg-card">
-                    {loading ? (
-                        <div className="flex items-center justify-center p-12">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                                <Package className="h-4 w-4 animate-pulse" />
-                                <span className="text-sm">Cargando productos...</span>
-                            </div>
-                        </div>
-                    ) : products.length === 0 ? (
+                    {products.length === 0 ? (
                         <div className="flex flex-col items-center justify-center p-12 text-center">
                             <Package className="h-12 w-12 text-muted-foreground/50 mb-4" />
                             <h3 className="text-lg font-medium text-foreground mb-2">
@@ -124,17 +123,24 @@ export default function AdminProductsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="secondary" className="font-normal">
-                                                {product.category}
+                                                {getCategoryById(product.categoryId || '')?.name || 'Sin categoría'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="space-y-1">
-                                                <p className="font-medium">
-                                                    ${product.price}
-                                                </p>
-                                                {product.originalPrice && (
+                                                <div className="flex items-center gap-2">
+                                                    <p className="font-medium">
+                                                        ${product.price.toFixed(2)}
+                                                    </p>
+                                                    {product.hasPromotion && product.promotionPercentage && (
+                                                        <Badge variant="destructive" className="text-xs">
+                                                            -{product.promotionPercentage}%
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                {product.originalPrice && product.hasPromotion && (
                                                     <p className="text-xs text-muted-foreground line-through">
-                                                        ${product.originalPrice}
+                                                        ${product.originalPrice.toFixed(2)}
                                                     </p>
                                                 )}
                                             </div>

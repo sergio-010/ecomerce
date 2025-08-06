@@ -39,29 +39,18 @@ export default function AdminLoginPage() {
         setLoginError("")
 
         try {
-            console.log("Attempting login with:", data.email);
-
             const result = await signIn("credentials", {
                 email: data.email,
                 password: data.password,
                 redirect: false,
-                callbackUrl: "/admin/products"
             })
 
-            console.log("SignIn result:", result);
-
             if (result?.error) {
-                console.error("Login error:", result.error);
                 setLoginError("Credenciales incorrectas. Verifica tu email y contraseña.")
             } else if (result?.ok) {
-                console.log("Login successful, redirecting...");
                 router.push("/admin/products")
-            } else {
-                console.error("Unexpected login result:", result);
-                setLoginError("Error inesperado al iniciar sesión.")
             }
-        } catch (error) {
-            console.error("Login exception:", error);
+        } catch {
             setLoginError("Error al iniciar sesión. Inténtalo de nuevo.")
         }
     }
@@ -205,6 +194,8 @@ export default function AdminLoginPage() {
                         </form>
                     </CardContent>
                 </Card>
+
+                {/* Footer */}
                 <p className="text-center text-xs text-muted-foreground">
                     Este es un panel de administración seguro.
                     <br />

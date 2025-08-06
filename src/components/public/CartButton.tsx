@@ -22,16 +22,16 @@ export function CartButton() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setOpen(true)}
-                className="relative text-gray-700 hover:text-black"
+                className="relative text-gray-700 hover:text-black hover:bg-gray-100 transition-colors"
                 aria-label="Abrir carrito"
             >
                 <ShoppingCart className="w-5 h-5" />
                 {isHydrated && totalItems > 0 && (
                     <Badge
-                        className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs bg-red-500 text-white flex items-center justify-center rounded-full"
+                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs bg-red-500 hover:bg-red-500 text-white flex items-center justify-center rounded-full border-2 border-white"
                         aria-label={`${totalItems} artículos en el carrito`}
                     >
-                        {totalItems}
+                        {totalItems > 99 ? '99+' : totalItems}
                     </Badge>
                 )}
             </Button>

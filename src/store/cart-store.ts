@@ -12,6 +12,7 @@ interface CartState {
   isHydrated: boolean;
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -45,6 +46,18 @@ export const useCartStore = create<CartState>()(
       removeItem: (productId) => {
         const updated = get().items.filter(
           (item) => item.product.id !== productId
+        );
+        set({ items: updated });
+      },
+
+      updateQuantity: (productId, quantity) => {
+        if (quantity <= 0) {
+          get().removeItem(productId);
+          return;
+        }
+
+        const updated = get().items.map((item) =>
+          item.product.id === productId ? { ...item, quantity } : item
         );
         set({ items: updated });
       },

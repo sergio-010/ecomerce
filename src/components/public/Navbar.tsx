@@ -1,47 +1,39 @@
 "use client"
 
 import Link from "next/link"
-import { LogIn, LogOut, Menu } from "lucide-react"
+import { LogIn, LogOut, Menu, ShoppingBag } from "lucide-react"
 import { Button } from "../ui/button"
 import { CartButton } from "./CartButton"
-import { getCurrentUser } from "@/lib"
 import { useCategoryStore } from "@/store/category-store"
 import { useState, useEffect } from "react"
-
-interface User {
-    id: string
-    email: string
-    name: string
-    role: "admin" | "user"
-}
+import { useSession, signOut } from "next-auth/react"
 
 export function Navbar() {
+    const { data: session } = useSession()
     const { getParentCategories } = useCategoryStore()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isHydrated, setIsHydrated] = useState(false)
-    const [user, setUser] = useState<User | null>(null)
 
     // Ensure hydration consistency
     useEffect(() => {
         setIsHydrated(true)
-        setUser(getCurrentUser())
     }, [])
 
     const categories = isHydrated ? getParentCategories().slice(0, 4) : [] // Mostrar máximo 4 categorías
 
-    const handleLogout = () => {
-        console.log("Cerrar sesión")
+    const handleLogout = async () => {
+        await signOut({ redirect: false })
     }
 
     return (
-        <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
                 {/* Logo + nombre de tienda */}
-                <Link href="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground font-bold rounded-md text-sm">
-                        E
+                <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold rounded-lg text-sm shadow-sm">
+                        <ShoppingBag className="w-4 h-4" />
                     </div>
-                    <span className="text-lg font-semibold">Mi Tienda</span>
+                    <span className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">Mi Tienda</span>
                 </Link>
 
                 {/* Categorías - Desktop */}
@@ -55,12 +47,6 @@ export function Navbar() {
                             {category.name}
                         </Link>
                     ))}
-                    <Link
-                        href="/admin/login"
-                        className="text-primary hover:text-primary/80 transition-colors font-medium"
-                    >
-                        Admin
-                    </Link>
                 </nav>
 
                 {/* Menu Mobile */}
@@ -77,14 +63,14 @@ export function Navbar() {
                 <div className="hidden md:flex items-center gap-3">
                     <CartButton />
 
-                    {isHydrated && user ? (
+                    {isHydrated && session ? (
                         <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium">Hola, {user.name}</span>
+                            <span className="text-sm font-medium">Hola, {session.user?.name}</span>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleLogout}
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive"
                             >
                                 <LogOut className="w-4 h-4" />
                                 Salir
@@ -95,7 +81,7 @@ export function Navbar() {
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="flex items-center gap-1"
+                                className="flex items-center gap-1 hover:bg-primary/10 hover:text-primary"
                             >
                                 <LogIn className="w-4 h-4" />
                                 Iniciar sesión
@@ -126,19 +112,12 @@ export function Navbar() {
                                 {category.name}
                             </Link>
                         ))}
-                        <Link
-                            href="/admin/login"
-                            className="block py-2 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Admin
-                        </Link>
 
                         {/* Auth section for mobile */}
                         <div className="pt-2 border-t">
-                            {isHydrated && user ? (
+                            {isHydrated && session ? (
                                 <div className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">Hola, {user.name}</p>
+                                    <p className="text-sm text-muted-foreground">Hola, {session.user?.name}</p>
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -146,7 +125,7 @@ export function Navbar() {
                                             handleLogout()
                                             setIsMobileMenuOpen(false)
                                         }}
-                                        className="w-full justify-start"
+                                        className="w-full justify-start hover:bg-destructive/10 hover:text-destructive"
                                     >
                                         <LogOut className="w-4 h-4 mr-2" />
                                         Cerrar sesión
@@ -154,7 +133,7 @@ export function Navbar() {
                                 </div>
                             ) : isHydrated ? (
                                 <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start">
+                                    <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-primary/10 hover:text-primary">
                                         <LogIn className="w-4 h-4 mr-2" />
                                         Iniciar sesión
                                     </Button>
