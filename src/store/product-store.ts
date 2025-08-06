@@ -13,6 +13,7 @@ interface ProductState {
   updateProduct: (id: string, data: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   toggleProductStatus: (id: string) => void;
+  getProducts: () => Product[];
   getProductById: (id: string) => Product | undefined;
   getProductsByCategory: (categoryId: string) => Product[];
   getActiveProducts: () => Product[];
@@ -151,6 +152,11 @@ export const useProductStore = create<ProductState>()(
               : product
           ),
         }));
+      },
+
+      getProducts: () => {
+        const { products } = get();
+        return products;
       },
 
       getProductById: (id: string) => {

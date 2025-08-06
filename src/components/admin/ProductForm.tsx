@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useCategoryStore } from '@/store/category-store'
 import { useProductStore } from '@/store/product-store'
@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { CustomModal } from '@/components/ui/custom-modal'
+import { MultipleImageUpload } from '@/components/ui/multiple-image-upload'
 import type { Product, CreateProductData } from '@/types'
 
 interface ProductFormProps {
@@ -22,44 +23,33 @@ interface ProductFormProps {
 
 export function ProductForm({ product, onSuccess, trigger, open, onOpenChange }: ProductFormProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const [selectedCategory, setSelectedCategory] = useState<string>(product?.categoryId || '')
-    const [hasPromotion, setHasPromotion] = useState(product?.hasPromotion || false)
-    const { getActiveCategories } = useCategoryStore()
-    const { addProduct, updateProduct } = useProductStore()
-    const activeCategories = getActiveCategories()
+    const [selectedCategory, setSelectedCategory] = useState('')
+    const [hasPromotion, setHasPromotion] = useState(false)
+    const [additionalImages, setAdditionalImages] = useState<string[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Use external open state if provided, otherwise use internal state
     const dialogOpen = open !== undefined ? open : isOpen
     const setDialogOpen = onOpenChange || setIsOpen
+
+    const { categories } = useCategoryStore()
+    const { addProduct, updateProduct } = useProductStore()
+
+    // Solo categorías activas para el formulario
+    const activeCategories = categories.filter(cat => cat.isActive)
 
     const {
         register,
         handleSubmit,
+        formState: { errors },
         reset,
         setValue,
-        watch,
-        formState: { errors, isSubmitting }
+        watch
     } = useForm<CreateProductData>({
-        defaultValues: product ? {
-            name: product.name,
-            price: product.price,
-            originalPrice: product.originalPrice,
-            image: product.image,
-            description: product.description,
-            categoryId: product.categoryId || '',
-            inStock: product.inStock ?? true,
-            quantity: product.quantity,
-            freeShipping: product.freeShipping || false,
-            hasPromotion: product.hasPromotion || false,
-            promotionPercentage: product.promotionPercentage || 0,
-            promotionStartDate: product.promotionStartDate,
-            promotionEndDate: product.promotionEndDate
-        } : {
+        defaultValues: {
             name: '',
-            price: 0,
-            originalPrice: 0,
-            image: '',
             description: '',
+            price: 0,
+            image: '',
             categoryId: '',
             inStock: true,
             quantity: 0,
@@ -71,37 +61,34 @@ export function ProductForm({ product, onSuccess, trigger, open, onOpenChange }:
 
     const price = watch('price')
     const promotionPercentage = watch('promotionPercentage')
+    const mainImage = watch('image')
 
     // Update form values when product changes
     useEffect(() => {
         if (product) {
             setSelectedCategory(product.categoryId || '')
             setHasPromotion(product.hasPromotion || false)
+            setAdditionalImages(product.images || [])
             reset({
                 name: product.name,
-                price: product.originalPrice || product.price, // Use original price if available
-                originalPrice: product.originalPrice,
-                image: product.image,
                 description: product.description,
+                price: product.price,
+                image: product.image,
                 categoryId: product.categoryId || '',
-                inStock: product.inStock ?? true,
-                quantity: product.quantity,
+                inStock: product.inStock,
+                quantity: product.quantity || 0,
                 freeShipping: product.freeShipping || false,
                 hasPromotion: product.hasPromotion || false,
                 promotionPercentage: product.promotionPercentage || 0,
-                promotionStartDate: product.promotionStartDate,
-                promotionEndDate: product.promotionEndDate
+                promotionStartDate: product.promotionStartDate ? new Date(product.promotionStartDate) : undefined,
+                promotionEndDate: product.promotionEndDate ? new Date(product.promotionEndDate) : undefined
             })
         } else {
-            // Reset form for new product
-            setSelectedCategory('')
-            setHasPromotion(false)
             reset({
                 name: '',
-                price: 0,
-                originalPrice: 0,
-                image: '',
                 description: '',
+                price: 0,
+                image: '',
                 categoryId: '',
                 inStock: true,
                 quantity: 0,
@@ -109,29 +96,37 @@ export function ProductForm({ product, onSuccess, trigger, open, onOpenChange }:
                 hasPromotion: false,
                 promotionPercentage: 0
             })
+            setSelectedCategory('')
+            setHasPromotion(false)
+            setAdditionalImages([])
         }
     }, [product, reset])
 
-    // Calculate discounted price
-    const calculateDiscountedPrice = () => {
-        if (hasPromotion && promotionPercentage && promotionPercentage > 0) {
-            return price - (price * promotionPercentage / 100)
+    const getCategoryDisplayName = (categoryId: string) => {
+        const category = categories.find(cat => cat.id === categoryId)
+        if (!category) return ''
+
+        if (category.parentId) {
+            const parentCategory = categories.find(cat => cat.id === category.parentId)
+            return parentCategory ? `${parentCategory.name} > ${category.name}` : category.name
         }
-        return price
+
+        return category.name
     }
 
-    const onSubmit = (data: CreateProductData) => {
+    const calculateDiscountedPrice = () => {
+        if (!price || !promotionPercentage) return price || 0
+        return price - (price * promotionPercentage / 100)
+    }
+
+    const onSubmit = async (data: CreateProductData) => {
         try {
+            setIsSubmitting(true)
+
             const productData = {
                 ...data,
-                categoryId: selectedCategory,
-                hasPromotion,
-                // Calculate originalPrice if there's a promotion
-                originalPrice: hasPromotion && data.promotionPercentage ? data.price : undefined,
-                // Adjust price if there's a promotion
-                price: hasPromotion && data.promotionPercentage
-                    ? data.price - (data.price * data.promotionPercentage / 100)
-                    : data.price
+                images: additionalImages,
+                categoryId: selectedCategory
             }
 
             if (product) {
@@ -143,294 +138,408 @@ export function ProductForm({ product, onSuccess, trigger, open, onOpenChange }:
             reset()
             setSelectedCategory('')
             setHasPromotion(false)
+            setAdditionalImages([])
             setDialogOpen(false)
             onSuccess?.()
         } catch (error) {
             console.error('Error saving product:', error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
+    const handleClose = () => {
+        reset()
+        setSelectedCategory('')
+        setHasPromotion(false)
+        setAdditionalImages([])
+        setDialogOpen(false)
+    }
+
     return (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-                {trigger || (
-                    <Button>
-                        {product ? 'Editar Producto' : 'Nuevo Producto'}
-                    </Button>
-                )}
-            </DialogTrigger>
+        <>
+            {trigger && (
+                <div onClick={() => setDialogOpen(true)}>
+                    {trigger}
+                </div>
+            )}
 
-            <DialogContent className="max-w-4xl w-[95vw] max-h-[95vh] overflow-hidden p-0">
-                <div className="flex flex-col h-full">
-                    <DialogHeader className="px-6 py-4 border-b">
-                        <DialogTitle className="text-xl font-semibold">
-                            {product ? 'Editar Producto' : 'Crear Nuevo Producto'}
-                        </DialogTitle>
-                    </DialogHeader>
+            {!trigger && (
+                <Button onClick={() => setDialogOpen(true)}>
+                    {product ? 'Editar Producto' : 'Nuevo Producto'}
+                </Button>
+            )}
 
-                    <div className="flex-1 overflow-y-auto px-6 py-4">
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" id="product-form">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {/* Información básica */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-medium text-foreground border-b pb-2">
-                                        Información Básica
-                                    </h3>
+            <CustomModal
+                isOpen={dialogOpen}
+                onClose={handleClose}
+                title={product ? 'Editar Producto' : 'Crear Nuevo Producto'}
+                subtitle={product ? 'Modifica la información del producto' : 'Completa los datos para agregar un nuevo producto'}
+                size="full"
+                footer={
+                    <div className="flex justify-end space-x-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                            className="px-8 h-12 text-base"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSubmit(onSubmit)}
+                            disabled={isSubmitting}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-12 h-12 text-base font-semibold"
+                        >
+                            {isSubmitting ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Guardando...
+                                </div>
+                            ) : (
+                                <div className="flex items-center">
+                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {product ? 'Guardar Cambios' : 'Crear Producto'}
+                                </div>
+                            )}
+                        </Button>
+                    </div>
+                }
+            >
+                <form onSubmit={handleSubmit(onSubmit)} id="product-form">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                        {/* Información básica */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                                <span className="w-3 h-3 bg-blue-500 rounded-full mr-3"></span>
+                                Información Básica
+                            </h3>
 
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="name">Nombre del Producto *</Label>
-                                            <Input
-                                                id="name"
-                                                {...register('name', {
-                                                    required: 'El nombre es obligatorio',
-                                                    minLength: { value: 2, message: 'Mínimo 2 caracteres' }
-                                                })}
-                                                placeholder="Ej: iPhone 15 Pro"
-                                            />
-                                            {errors.name && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="description">Descripción *</Label>
-                                            <Textarea
-                                                id="description"
-                                                {...register('description', {
-                                                    required: 'La descripción es obligatoria',
-                                                    minLength: { value: 10, message: 'Mínimo 10 caracteres' }
-                                                })}
-                                                placeholder="Describe las características del producto..."
-                                                rows={4}
-                                            />
-                                            {errors.description && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.description.message}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="categoryId">Categoría *</Label>
-                                            <Select
-                                                value={selectedCategory}
-                                                onValueChange={(value) => {
-                                                    setSelectedCategory(value)
-                                                    setValue('categoryId', value)
-                                                }}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona una categoría" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {activeCategories.map((category) => (
-                                                        <SelectItem key={category.id} value={category.id}>
-                                                            {category.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <Input
-                                                type="hidden"
-                                                {...register('categoryId', {
-                                                    required: 'La categoría es obligatoria'
-                                                })}
-                                                value={selectedCategory}
-                                            />
-                                            {errors.categoryId && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.categoryId.message}</p>
-                                            )}
-                                        </div>
-
-                                        <div>
-                                            <Label htmlFor="image">Imagen del Producto *</Label>
-                                            <Input
-                                                id="image"
-                                                {...register('image', {
-                                                    required: 'La imagen es obligatoria'
-                                                })}
-                                                placeholder="URL de la imagen"
-                                            />
-                                            {errors.image && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.image.message}</p>
-                                            )}
-                                        </div>
-                                    </div>
+                            <div className="space-y-6">
+                                <div>
+                                    <Label htmlFor="name" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Nombre del Producto *
+                                    </Label>
+                                    <Input
+                                        id="name"
+                                        {...register('name', {
+                                            required: 'El nombre es obligatorio',
+                                            minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                                        })}
+                                        placeholder="Ej: iPhone 15 Pro"
+                                        className="w-full h-12 text-base"
+                                    />
+                                    {errors.name && (
+                                        <p className="text-sm text-red-600 mt-2">{errors.name.message}</p>
+                                    )}
                                 </div>
 
-                                {/* Precios y stock */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-medium text-foreground border-b pb-2">
-                                        Precios y Stock
-                                    </h3>
+                                <div>
+                                    <Label htmlFor="description" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Descripción *
+                                    </Label>
+                                    <Textarea
+                                        id="description"
+                                        {...register('description', {
+                                            required: 'La descripción es obligatoria',
+                                            minLength: { value: 10, message: 'Mínimo 10 caracteres' }
+                                        })}
+                                        placeholder="Describe las características del producto..."
+                                        rows={5}
+                                        className="w-full text-base resize-none"
+                                    />
+                                    {errors.description && (
+                                        <p className="text-sm text-red-600 mt-2">{errors.description.message}</p>
+                                    )}
+                                </div>
 
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="price">Precio Base *</Label>
-                                            <Input
-                                                id="price"
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                {...register('price', {
-                                                    required: 'El precio es obligatorio',
-                                                    min: { value: 0.01, message: 'El precio debe ser mayor a 0' },
-                                                    valueAsNumber: true
-                                                })}
-                                                placeholder="0.00"
-                                            />
-                                            {errors.price && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.price.message}</p>
-                                            )}
-                                        </div>
+                                <div>
+                                    <Label htmlFor="categoryId" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Categoría *
+                                    </Label>
+                                    <Select
+                                        value={selectedCategory}
+                                        onValueChange={(value) => {
+                                            setSelectedCategory(value)
+                                            setValue('categoryId', value)
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-full h-12 text-base">
+                                            <SelectValue placeholder="Selecciona una categoría" />
+                                        </SelectTrigger>
+                                        <SelectContent className="max-h-64">
+                                            {activeCategories.map((category) => {
+                                                // Si es una categoría padre (no tiene parentId)
+                                                if (!category.parentId) {
+                                                    // Obtener subcategorías de esta categoría padre
+                                                    const subcategories = activeCategories.filter(
+                                                        sub => sub.parentId === category.id
+                                                    )
 
-                                        <div>
-                                            <Label htmlFor="quantity">Cantidad en Stock *</Label>
-                                            <Input
-                                                id="quantity"
-                                                type="number"
-                                                min="0"
-                                                {...register('quantity', {
-                                                    required: 'La cantidad es obligatoria',
-                                                    min: { value: 0, message: 'La cantidad no puede ser negativa' },
-                                                    valueAsNumber: true
-                                                })}
-                                                placeholder="0"
-                                            />
-                                            {errors.quantity && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>
-                                            )}
-                                        </div>
+                                                    return (
+                                                        <React.Fragment key={category.id}>
+                                                            {/* Categoría padre */}
+                                                            <SelectItem value={category.id} className="font-semibold text-blue-600">
+                                                                📁 {category.name}
+                                                            </SelectItem>
 
-                                        <div className="flex items-center space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                id="inStock"
-                                                {...register('inStock')}
-                                                className="h-4 w-4"
-                                            />
-                                            <Label htmlFor="inStock">Producto disponible</Label>
-                                        </div>
+                                                            {/* Subcategorías */}
+                                                            {subcategories.map((subcategory) => (
+                                                                <SelectItem
+                                                                    key={subcategory.id}
+                                                                    value={subcategory.id}
+                                                                    className="pl-6 text-gray-700"
+                                                                >
+                                                                    ↳ {subcategory.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </React.Fragment>
+                                                    )
+                                                }
+                                                return null
+                                            })}
 
-                                        <div className="flex items-center space-x-2">
-                                            <input
-                                                type="checkbox"
-                                                id="freeShipping"
-                                                {...register('freeShipping')}
-                                                className="h-4 w-4"
-                                            />
-                                            <Label htmlFor="freeShipping">Envío gratis</Label>
+                                            {/* Mostrar categorías huérfanas (sin padre definido) */}
+                                            {activeCategories
+                                                .filter(cat => cat.parentId && !activeCategories.find(parent => parent.id === cat.parentId))
+                                                .map((category) => (
+                                                    <SelectItem key={category.id} value={category.id}>
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        type="hidden"
+                                        {...register('categoryId', {
+                                            required: 'La categoría es obligatoria'
+                                        })}
+                                        value={selectedCategory}
+                                    />
+                                    {errors.categoryId && (
+                                        <p className="text-sm text-red-600 mt-1 flex items-center">
+                                            <span className="mr-1">⚠️</span>
+                                            {errors.categoryId.message}
+                                        </p>
+                                    )}
+
+                                    {/* Ayuda visual */}
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        📁 = Categoría principal • ↳ = Subcategoría
+                                    </p>
+
+                                    {/* Mostrar categoría seleccionada */}
+                                    {selectedCategory && (
+                                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                                            <p className="text-sm text-blue-700">
+                                                <strong>Seleccionado:</strong> {getCategoryDisplayName(selectedCategory)}
+                                            </p>
                                         </div>
-                                    </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <MultipleImageUpload
+                                        mainImage={mainImage}
+                                        additionalImages={additionalImages}
+                                        onMainImageChange={(url) => {
+                                            setValue('image', url, { shouldValidate: true })
+                                        }}
+                                        onAdditionalImagesChange={setAdditionalImages}
+                                        maxImages={4}
+                                    />
+                                    {/* Campo oculto para validación */}
+                                    <input
+                                        type="hidden"
+                                        {...register('image', {
+                                            required: 'La imagen principal es obligatoria'
+                                        })}
+                                    />
+                                    {errors.image && (
+                                        <p className="text-sm text-red-600 mt-1 flex items-center">
+                                            <span className="mr-1">⚠️</span>
+                                            {errors.image.message}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Sección de promociones */}
-                            <div className="border-t pt-8">
-                                <h3 className="text-lg font-medium mb-6">Promociones</h3>
+                        {/* Precios y stock */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                                <span className="w-3 h-3 bg-green-500 rounded-full mr-3"></span>
+                                Precios y Stock
+                            </h3>
 
-                                <div className="flex items-center space-x-2 mb-6">
-                                    <input
-                                        type="checkbox"
-                                        id="hasPromotion"
-                                        checked={hasPromotion}
-                                        onChange={(e) => {
-                                            setHasPromotion(e.target.checked)
-                                            setValue('hasPromotion', e.target.checked)
-                                            if (!e.target.checked) {
-                                                setValue('promotionPercentage', 0)
-                                                setValue('promotionStartDate', undefined)
-                                                setValue('promotionEndDate', undefined)
-                                            }
-                                        }}
-                                        className="h-4 w-4"
-                                    />
-                                    <Label htmlFor="hasPromotion">Este producto tiene promoción</Label>
+                            <div className="space-y-6">
+                                <div>
+                                    <Label htmlFor="price" className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Precio Base *
+                                    </Label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            {...register('price', {
+                                                required: 'El precio es obligatorio',
+                                                min: { value: 0.01, message: 'El precio debe ser mayor a 0' },
+                                                valueAsNumber: true
+                                            })}
+                                            placeholder="0.00"
+                                            className="pl-8 w-full"
+                                        />
+                                    </div>
+                                    {errors.price && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.price.message}</p>
+                                    )}
                                 </div>
 
-                                {hasPromotion && (
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50 rounded-lg">
-                                        <div>
-                                            <Label htmlFor="promotionPercentage">Porcentaje de Descuento (%)</Label>
-                                            <Input
-                                                id="promotionPercentage"
-                                                type="number"
-                                                min="1"
-                                                max="99"
-                                                {...register('promotionPercentage', {
-                                                    min: { value: 1, message: 'Mínimo 1%' },
-                                                    max: { value: 99, message: 'Máximo 99%' },
-                                                    valueAsNumber: true
-                                                })}
-                                                placeholder="0"
-                                            />
-                                            {errors.promotionPercentage && (
-                                                <p className="text-sm text-red-500 mt-1">{errors.promotionPercentage.message}</p>
-                                            )}
-                                        </div>
+                                <div>
+                                    <Label htmlFor="quantity" className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Cantidad en Stock *
+                                    </Label>
+                                    <Input
+                                        id="quantity"
+                                        type="number"
+                                        min="0"
+                                        {...register('quantity', {
+                                            required: 'La cantidad es obligatoria',
+                                            min: { value: 0, message: 'La cantidad no puede ser negativa' },
+                                            valueAsNumber: true
+                                        })}
+                                        placeholder="0"
+                                        className="w-full"
+                                    />
+                                    {errors.quantity && (
+                                        <p className="text-sm text-red-600 mt-1">{errors.quantity.message}</p>
+                                    )}
+                                </div>
 
-                                        <div>
-                                            <Label htmlFor="promotionStartDate">Fecha de Inicio</Label>
-                                            <Input
-                                                id="promotionStartDate"
-                                                type="date"
-                                                {...register('promotionStartDate', {
-                                                    valueAsDate: true
-                                                })}
-                                            />
-                                        </div>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="inStock"
+                                        {...register('inStock')}
+                                        className="h-4 w-4"
+                                    />
+                                    <Label htmlFor="inStock">Producto disponible</Label>
+                                </div>
 
-                                        <div>
-                                            <Label htmlFor="promotionEndDate">Fecha de Fin</Label>
-                                            <Input
-                                                id="promotionEndDate"
-                                                type="date"
-                                                {...register('promotionEndDate', {
-                                                    valueAsDate: true
-                                                })}
-                                            />
-                                        </div>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="freeShipping"
+                                        {...register('freeShipping')}
+                                        className="h-4 w-4"
+                                    />
+                                    <Label htmlFor="freeShipping">Envío gratis</Label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                        {hasPromotion && promotionPercentage && promotionPercentage > 0 && (
-                                            <div className="md:col-span-3 p-4 bg-blue-50 rounded border border-blue-200">
-                                                <p className="text-sm text-blue-700">
-                                                    <span className="font-semibold">Precio con descuento: </span>
-                                                    ${calculateDiscountedPrice().toFixed(2)}
-                                                    <span className="text-gray-500 ml-2">(Precio original: ${price?.toFixed(2)})</span>
-                                                </p>
-                                            </div>
-                                        )}
+                    {/* Sección de promociones */}
+                    <div className="mt-10 bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                            <span className="w-3 h-3 bg-purple-500 rounded-full mr-3"></span>
+                            Promociones
+                        </h3>
+
+                        <div className="flex items-center space-x-3 mb-8">
+                            <input
+                                type="checkbox"
+                                id="hasPromotion"
+                                checked={hasPromotion}
+                                onChange={(e) => {
+                                    setHasPromotion(e.target.checked)
+                                    setValue('hasPromotion', e.target.checked)
+                                    if (!e.target.checked) {
+                                        setValue('promotionPercentage', 0)
+                                        setValue('promotionStartDate', undefined)
+                                        setValue('promotionEndDate', undefined)
+                                    }
+                                }}
+                                className="h-5 w-5 text-purple-600"
+                            />
+                            <Label htmlFor="hasPromotion" className="text-base font-medium text-gray-700">
+                                Este producto tiene promoción
+                            </Label>
+                        </div>
+
+                        {hasPromotion && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-8 bg-purple-50 rounded-xl border border-purple-200">
+                                <div>
+                                    <Label htmlFor="promotionPercentage" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Porcentaje de Descuento (%)
+                                    </Label>
+                                    <Input
+                                        id="promotionPercentage"
+                                        type="number"
+                                        min="1"
+                                        max="99"
+                                        {...register('promotionPercentage', {
+                                            min: { value: 1, message: 'Mínimo 1%' },
+                                            max: { value: 99, message: 'Máximo 99%' },
+                                            valueAsNumber: true
+                                        })}
+                                        placeholder="0"
+                                        className="h-12 text-base w-full"
+                                    />
+                                    {errors.promotionPercentage && (
+                                        <p className="text-sm text-red-600 mt-2">{errors.promotionPercentage.message}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="promotionStartDate" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Fecha de Inicio
+                                    </Label>
+                                    <Input
+                                        id="promotionStartDate"
+                                        type="date"
+                                        {...register('promotionStartDate', {
+                                            valueAsDate: true
+                                        })}
+                                        className="h-12 text-base w-full"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label htmlFor="promotionEndDate" className="text-base font-medium text-gray-700 mb-3 block">
+                                        Fecha de Fin
+                                    </Label>
+                                    <Input
+                                        id="promotionEndDate"
+                                        type="date"
+                                        {...register('promotionEndDate', {
+                                            valueAsDate: true
+                                        })}
+                                        className="h-12 text-base w-full"
+                                    />
+                                </div>
+
+                                {hasPromotion && promotionPercentage && promotionPercentage > 0 && (
+                                    <div className="md:col-span-3 p-4 bg-blue-50 rounded border border-blue-200">
+                                        <p className="text-sm text-blue-700">
+                                            <span className="font-semibold">Precio con descuento: </span>
+                                            ${calculateDiscountedPrice().toFixed(2)}
+                                            <span className="text-gray-500 ml-2">(Precio original: ${price?.toFixed(2)})</span>
+                                        </p>
                                     </div>
                                 )}
                             </div>
-                        </form>
+                        )}
                     </div>
-
-                    {/* Botones de acción - Fixed footer */}
-                    <div className="border-t px-6 py-4 bg-gray-50">
-                        <div className="flex justify-end space-x-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    reset()
-                                    setSelectedCategory('')
-                                    setHasPromotion(false)
-                                    setDialogOpen(false)
-                                }}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                form="product-form"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Guardando...' : (product ? 'Actualizar' : 'Crear')} Producto
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                </form>
+            </CustomModal>
+        </>
     )
 }

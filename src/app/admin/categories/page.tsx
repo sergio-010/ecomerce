@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff, FolderOpen } from "lucide-react"
 
 export default function CategoriesPage() {
-    const { categories, deleteCategory, toggleCategoryStatus, getParentCategories, getChildCategories } = useCategoryStore()
+    const { categories, deleteCategory, getAllCategories, getChildCategories, activateAllCategories } = useCategoryStore()
 
     const handleDelete = (id: string) => {
         if (confirm('¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas las subcategorías.')) {
@@ -19,7 +19,16 @@ export default function CategoriesPage() {
         }
     }
 
-    const parentCategories = getParentCategories()
+    const handleActivateAll = () => {
+        if (confirm('¿Quieres activar todas las categorías?')) {
+            activateAllCategories()
+        }
+    }
+
+    // Mostrar todas las categorías padre (activas e inactivas) para poder gestionarlas
+    const allCategories = getAllCategories()
+    const parentCategories = allCategories.filter(cat => !cat.parentId).sort((a, b) => a.order - b.order)
+    const inactiveCount = allCategories.filter(cat => !cat.isActive).length
 
     return (
         <AdminLayout>
@@ -31,7 +40,19 @@ export default function CategoriesPage() {
                             Administra las categorías y subcategorías de productos
                         </p>
                     </div>
-                    <CategoryForm />
+                    <div className="flex gap-2">
+                        {inactiveCount > 0 && (
+                            <Button
+                                onClick={handleActivateAll}
+                                variant="outline"
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                            >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Activar todas ({inactiveCount})
+                            </Button>
+                        )}
+                        <CategoryForm />
+                    </div>
                 </div>
 
                 <Card>
@@ -68,7 +89,7 @@ export default function CategoriesPage() {
                                                 const childCategories = getChildCategories(category.id)
                                                 return (
                                                     <React.Fragment key={category.id}>
-                                                        <TableRow>
+                                                        <TableRow className={!category.isActive ? "bg-gray-50 opacity-75" : ""}>
                                                             <TableCell>
                                                                 <div className="flex items-center">
                                                                     <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
@@ -88,7 +109,7 @@ export default function CategoriesPage() {
                                                                 </code>
                                                             </TableCell>
                                                             <TableCell>
-                                                                <Badge variant={category.isActive ? "default" : "secondary"}>
+                                                                <Badge variant={category.isActive ? "default" : "destructive"}>
                                                                     {category.isActive ? "Activa" : "Inactiva"}
                                                                 </Badge>
                                                             </TableCell>
@@ -101,17 +122,14 @@ export default function CategoriesPage() {
                                                             <TableCell>{category.order}</TableCell>
                                                             <TableCell className="text-right">
                                                                 <div className="flex justify-end space-x-2">
-                                                                    <Button
-                                                                        variant="ghost"
-                                                                        size="sm"
-                                                                        onClick={() => toggleCategoryStatus(category.id)}
-                                                                    >
+                                                                    {/* Indicador visual del estado - solo lectura */}
+                                                                    <div className="flex items-center justify-center w-8 h-8" title="Estado de la categoría">
                                                                         {category.isActive ? (
-                                                                            <EyeOff className="h-4 w-4" />
+                                                                            <Eye className="h-4 w-4 text-green-600" />
                                                                         ) : (
-                                                                            <Eye className="h-4 w-4" />
+                                                                            <EyeOff className="h-4 w-4 text-gray-400" />
                                                                         )}
-                                                                    </Button>
+                                                                    </div>
                                                                     <CategoryForm
                                                                         category={category}
                                                                         trigger={
@@ -167,17 +185,14 @@ export default function CategoriesPage() {
                                                                 <TableCell>{subCategory.order}</TableCell>
                                                                 <TableCell className="text-right">
                                                                     <div className="flex justify-end space-x-2">
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="sm"
-                                                                            onClick={() => toggleCategoryStatus(subCategory.id)}
-                                                                        >
+                                                                        {/* Indicador visual del estado - solo lectura */}
+                                                                        <div className="flex items-center justify-center w-8 h-8" title="Estado de la subcategoría">
                                                                             {subCategory.isActive ? (
-                                                                                <EyeOff className="h-4 w-4" />
+                                                                                <Eye className="h-4 w-4 text-green-600" />
                                                                             ) : (
-                                                                                <Eye className="h-4 w-4" />
+                                                                                <EyeOff className="h-4 w-4 text-gray-400" />
                                                                             )}
-                                                                        </Button>
+                                                                        </div>
                                                                         <CategoryForm
                                                                             category={subCategory}
                                                                             trigger={

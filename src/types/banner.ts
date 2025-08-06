@@ -2,8 +2,10 @@ export interface Banner {
   id: string;
   title: string;
   subtitle?: string;
+  description?: string;
   imageUrl: string;
-  link?: string;
+  linkUrl?: string;
+  buttonText?: string;
   isActive: boolean;
   order: number;
   startDate?: Date;
@@ -17,8 +19,10 @@ export interface Banner {
 export interface CreateBannerData {
   title: string;
   subtitle?: string;
+  description?: string;
   imageUrl: string;
-  link?: string;
+  linkUrl?: string;
+  buttonText?: string;
   isActive?: boolean;
   order?: number;
   startDate?: Date;

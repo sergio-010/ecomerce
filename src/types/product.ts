@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   image: string;
+  images?: string[]; // Array de imágenes adicionales
   description: string;
   category: string;
   categoryId?: string;
@@ -24,6 +25,7 @@ export interface CreateProductData {
   price: number;
   originalPrice?: number;
   image: string;
+  images?: string[]; // Array de imágenes adicionales
   description: string;
   categoryId: string;
   inStock?: boolean;

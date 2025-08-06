@@ -78,8 +78,8 @@ export default function BannersPage() {
                                                     </TableCell>
                                                     <TableCell>{banner.order}</TableCell>
                                                     <TableCell>
-                                                        {banner.link ? (
-                                                            <span className="text-blue-600">{banner.link}</span>
+                                                        {banner.linkUrl ? (
+                                                            <span className="text-blue-600">{banner.linkUrl}</span>
                                                         ) : (
                                                             <span className="text-muted-foreground">Sin enlace</span>
                                                         )}

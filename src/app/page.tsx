@@ -3,6 +3,7 @@ import { ProductGrid } from "@/components/public/ProductGrid"
 import { Navbar } from "@/components/public/Navbar"
 import { HeroBanner } from "@/components/public/HeroBanner"
 import { CategoryGrid } from "@/components/public/CategoryGrid"
+import { Footer } from "@/components/public/Footer"
 
 export default async function Home() {
   const products = await getProducts()
@@ -34,6 +35,7 @@ export default async function Home() {
           <ProductGrid products={products} />
         </section>
       </main>
+      <Footer />
     </div>
   )
 }

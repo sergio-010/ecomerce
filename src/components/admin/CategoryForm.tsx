@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { CustomModal } from '@/components/ui/custom-modal'
 import type { Category, CreateCategoryData } from '@/types'
 
 interface CategoryFormProps {
@@ -20,6 +20,7 @@ interface CategoryFormProps {
 export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [selectedParent, setSelectedParent] = useState<string>(category?.parentId || 'none')
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const { addCategory, updateCategory, getParentCategories } = useCategoryStore()
     const parentCategories = getParentCategories()
 
@@ -28,45 +29,40 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
         handleSubmit,
         reset,
         setValue,
-        formState: { errors, isSubmitting }
+        formState: { errors }
     } = useForm<CreateCategoryData>({
-        defaultValues: category ? {
-            name: category.name,
-            slug: category.slug,
-            description: category.description || '',
-            imageUrl: category.imageUrl || '',
-            isActive: category.isActive,
-            order: category.order,
-            parentId: category.parentId || 'none'
-        } : {
-            name: '',
-            slug: '',
-            description: '',
-            imageUrl: '',
-            isActive: true,
-            order: 1,
-            parentId: 'none'
+        defaultValues: {
+            name: category?.name || '',
+            slug: category?.slug || '',
+            description: category?.description || '',
+            imageUrl: category?.imageUrl || '',
+            parentId: category?.parentId || undefined,
+            order: category?.order || 0,
+            isActive: category?.isActive ?? true
         }
     })
 
-    // Auto-generate slug when name changes
+    const generateSlug = (name: string) => {
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim()
+    }
+
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const name = e.target.value
-        if (!category) { // Only auto-generate for new categories
-            const slug = name
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-')
-                .trim()
+        if (!category) { // Solo generar slug automáticamente para nuevas categorías
+            const slug = generateSlug(name)
             setValue('slug', slug)
         }
     }
 
-    const onSubmit = (data: CreateCategoryData) => {
+    const onSubmit = async (data: CreateCategoryData) => {
         try {
+            setIsSubmitting(true)
+
             const categoryData = {
                 ...data,
                 parentId: selectedParent === 'none' ? undefined : selectedParent
@@ -84,139 +80,173 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
             onSuccess?.()
         } catch (error) {
             console.error('Error saving category:', error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
+    const handleClose = () => {
+        reset()
+        setSelectedParent('none')
+        setIsOpen(false)
+    }
+
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                {trigger || (
-                    <Button>
-                        {category ? 'Editar Categoría' : 'Nueva Categoría'}
-                    </Button>
-                )}
-            </DialogTrigger>
+        <>
+            {trigger && (
+                <div onClick={() => setIsOpen(true)}>
+                    {trigger}
+                </div>
+            )}
 
-            <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-hidden p-0">
-                <div className="flex flex-col h-full">
-                    <DialogHeader className="px-6 py-4 border-b">
-                        <DialogTitle className="text-xl font-semibold">
-                            {category ? 'Editar Categoría' : 'Crear Nueva Categoría'}
-                        </DialogTitle>
-                    </DialogHeader>
+            {!trigger && (
+                <Button onClick={() => setIsOpen(true)}>
+                    {category ? 'Editar Categoría' : 'Nueva Categoría'}
+                </Button>
+            )}
 
-                    <div className="flex-1 overflow-y-auto px-6 py-4">
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" id="category-form">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre *</Label>
-                                    <Input
-                                        id="name"
-                                        {...register('name', {
-                                            required: 'El nombre es requerido',
-                                            onChange: handleNameChange
-                                        })}
-                                        placeholder="Nombre de la categoría"
-                                    />
-                                    {errors.name && (
-                                        <p className="text-sm text-red-500">{errors.name.message}</p>
-                                    )}
+            <CustomModal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title={category ? 'Editar Categoría' : 'Crear Nueva Categoría'}
+                subtitle={category ? 'Modifica la información de la categoría' : 'Completa los datos para crear una nueva categoría'}
+                size="lg"
+                footer={
+                    <div className="flex justify-end space-x-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="category-form"
+                            disabled={isSubmitting}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            {isSubmitting ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Guardando...
                                 </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="slug">Slug *</Label>
-                                    <Input
-                                        id="slug"
-                                        {...register('slug', { required: 'El slug es requerido' })}
-                                        placeholder="slug-de-categoria"
-                                    />
-                                    {errors.slug && (
-                                        <p className="text-sm text-red-500">{errors.slug.message}</p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Descripción</Label>
-                                <Textarea
-                                    id="description"
-                                    {...register('description')}
-                                    placeholder="Descripción de la categoría"
-                                    rows={3}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="imageUrl">URL de Imagen</Label>
-                                <Input
-                                    id="imageUrl"
-                                    {...register('imageUrl')}
-                                    placeholder="https://ejemplo.com/imagen.jpg"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="parentId">Categoría Padre</Label>
-                                    <Select value={selectedParent} onValueChange={setSelectedParent}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccionar categoría padre (opcional)" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Sin categoría padre</SelectItem>
-                                            {parentCategories.map((parent) => (
-                                                <SelectItem key={parent.id} value={parent.id}>
-                                                    {parent.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="order">Orden</Label>
-                                    <Input
-                                        id="order"
-                                        type="number"
-                                        {...register('order', { valueAsNumber: true })}
-                                        placeholder="1"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    id="isActive"
-                                    type="checkbox"
-                                    {...register('isActive')}
-                                    className="h-4 w-4 rounded border-gray-300"
-                                />
-                                <Label htmlFor="isActive">Categoría activa</Label>
-                            </div>
-                        </form>
+                            ) : (
+                                category ? 'Actualizar' : 'Crear'
+                            )}
+                        </Button>
                     </div>
+                }
+            >
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" id="category-form">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                                Nombre *
+                            </Label>
+                            <Input
+                                id="name"
+                                {...register('name', {
+                                    required: 'El nombre es requerido',
+                                    onChange: handleNameChange
+                                })}
+                                placeholder="Nombre de la categoría"
+                                className="h-11"
+                            />
+                            {errors.name && (
+                                <p className="text-sm text-red-500">{errors.name.message}</p>
+                            )}
+                        </div>
 
-                    {/* Botones de acción - Fixed footer */}
-                    <div className="border-t px-6 py-4 bg-gray-50">
-                        <div className="flex justify-end space-x-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                form="category-form"
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? 'Guardando...' : (category ? 'Actualizar' : 'Crear')}
-                            </Button>
+                        <div className="space-y-3">
+                            <Label htmlFor="slug" className="text-sm font-medium text-gray-700">
+                                Slug *
+                            </Label>
+                            <Input
+                                id="slug"
+                                {...register('slug', { required: 'El slug es requerido' })}
+                                placeholder="slug-de-categoria"
+                                className="h-11"
+                            />
+                            {errors.slug && (
+                                <p className="text-sm text-red-500">{errors.slug.message}</p>
+                            )}
                         </div>
                     </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+
+                    <div className="space-y-3">
+                        <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                            Descripción
+                        </Label>
+                        <Textarea
+                            id="description"
+                            {...register('description')}
+                            placeholder="Descripción de la categoría"
+                            rows={4}
+                            className="resize-none"
+                        />
+                    </div>
+
+                    <div className="space-y-3">
+                        <Label htmlFor="imageUrl" className="text-sm font-medium text-gray-700">
+                            URL de Imagen
+                        </Label>
+                        <Input
+                            id="imageUrl"
+                            {...register('imageUrl')}
+                            placeholder="https://ejemplo.com/imagen.jpg"
+                            className="h-11"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                            <Label htmlFor="parentId" className="text-sm font-medium text-gray-700">
+                                Categoría Padre
+                            </Label>
+                            <Select value={selectedParent} onValueChange={setSelectedParent}>
+                                <SelectTrigger className="h-11">
+                                    <SelectValue placeholder="Seleccionar categoría padre (opcional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Sin categoría padre</SelectItem>
+                                    {parentCategories.map((parent) => (
+                                        <SelectItem key={parent.id} value={parent.id}>
+                                            {parent.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label htmlFor="order" className="text-sm font-medium text-gray-700">
+                                Orden
+                            </Label>
+                            <Input
+                                id="order"
+                                type="number"
+                                {...register('order', { valueAsNumber: true })}
+                                placeholder="1"
+                                className="h-11"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                        <input
+                            id="isActive"
+                            type="checkbox"
+                            {...register('isActive')}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <Label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                            Categoría activa
+                        </Label>
+                    </div>
+                </form>
+            </CustomModal>
+        </>
     )
 }

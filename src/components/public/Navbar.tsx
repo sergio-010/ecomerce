@@ -1,29 +1,27 @@
 "use client"
 
 import Link from "next/link"
-import { LogIn, LogOut, Menu, ShoppingBag } from "lucide-react"
+import { Menu, ShoppingBag, Heart } from "lucide-react"
 import { Button } from "../ui/button"
 import { CartButton } from "./CartButton"
 import { useCategoryStore } from "@/store/category-store"
+import { useFavoritesStore } from "@/store/favorites-store"
 import { useState, useEffect } from "react"
-import { useSession, signOut } from "next-auth/react"
 
 export function Navbar() {
-    const { data: session } = useSession()
     const { getParentCategories } = useCategoryStore()
+    const { favorites } = useFavoritesStore()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isHydrated, setIsHydrated] = useState(false)
+
+    const favoritesCount = favorites.length
 
     // Ensure hydration consistency
     useEffect(() => {
         setIsHydrated(true)
     }, [])
 
-    const categories = isHydrated ? getParentCategories().slice(0, 4) : [] // Mostrar máximo 4 categorías
-
-    const handleLogout = async () => {
-        await signOut({ redirect: false })
-    }
+    const categories = isHydrated ? getParentCategories().slice(0, 6) : [] // Mostrar máximo 6 categorías
 
     return (
         <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
@@ -37,12 +35,12 @@ export function Navbar() {
                 </Link>
 
                 {/* Categorías - Desktop */}
-                <nav className="hidden md:flex gap-6 text-sm">
+                <nav className="hidden md:flex gap-1 text-sm">
                     {categories.map((category) => (
                         <Link
                             key={category.id}
                             href={`/category/${category.slug}`}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            className="px-3 py-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all duration-200"
                         >
                             {category.name}
                         </Link>
@@ -59,41 +57,29 @@ export function Navbar() {
                     <Menu className="h-5 w-5" />
                 </Button>
 
-                {/* Carrito + login - Desktop */}
-                <div className="hidden md:flex items-center gap-3">
+                {/* Carrito + Favoritos - Desktop */}
+                <div className="hidden md:flex items-center gap-2">
+                    <Link href="/favorites" className="relative p-2 hover:bg-muted rounded-md transition-colors">
+                        <Heart className="h-5 w-5" />
+                        {favoritesCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                {favoritesCount}
+                            </span>
+                        )}
+                    </Link>
                     <CartButton />
-
-                    {isHydrated && session ? (
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm font-medium">Hola, {session.user?.name}</span>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleLogout}
-                                className="flex items-center gap-1 hover:bg-destructive/10 hover:text-destructive"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                Salir
-                            </Button>
-                        </div>
-                    ) : isHydrated ? (
-                        <Link href="/login">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="flex items-center gap-1 hover:bg-primary/10 hover:text-primary"
-                            >
-                                <LogIn className="w-4 h-4" />
-                                Iniciar sesión
-                            </Button>
-                        </Link>
-                    ) : (
-                        <div className="w-[120px] h-9"></div> // Placeholder para evitar layout shift
-                    )}
                 </div>
 
-                {/* Carrito - Mobile */}
-                <div className="md:hidden">
+                {/* Carrito + Favoritos - Mobile */}
+                <div className="md:hidden flex items-center gap-1">
+                    <Link href="/favorites" className="relative p-2 hover:bg-muted rounded-md transition-colors">
+                        <Heart className="h-5 w-5" />
+                        {favoritesCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                {favoritesCount > 9 ? '9+' : favoritesCount}
+                            </span>
+                        )}
+                    </Link>
                     <CartButton />
                 </div>
             </div>
@@ -101,45 +87,17 @@ export function Navbar() {
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
                 <div className="md:hidden border-t bg-background">
-                    <nav className="px-4 py-3 space-y-2">
+                    <nav className="px-4 py-3 space-y-1 max-h-96 overflow-y-auto">
                         {categories.map((category) => (
                             <Link
                                 key={category.id}
                                 href={`/category/${category.slug}`}
-                                className="block py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                className="block py-2 px-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 {category.name}
                             </Link>
                         ))}
-
-                        {/* Auth section for mobile */}
-                        <div className="pt-2 border-t">
-                            {isHydrated && session ? (
-                                <div className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">Hola, {session.user?.name}</p>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            handleLogout()
-                                            setIsMobileMenuOpen(false)
-                                        }}
-                                        className="w-full justify-start hover:bg-destructive/10 hover:text-destructive"
-                                    >
-                                        <LogOut className="w-4 h-4 mr-2" />
-                                        Cerrar sesión
-                                    </Button>
-                                </div>
-                            ) : isHydrated ? (
-                                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button variant="ghost" size="sm" className="w-full justify-start hover:bg-primary/10 hover:text-primary">
-                                        <LogIn className="w-4 h-4 mr-2" />
-                                        Iniciar sesión
-                                    </Button>
-                                </Link>
-                            ) : null}
-                        </div>
                     </nav>
                 </div>
             )}

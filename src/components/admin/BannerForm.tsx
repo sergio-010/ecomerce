@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { CustomModal } from '@/components/ui/custom-modal'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import { X } from 'lucide-react'
@@ -23,50 +23,57 @@ interface BannerFormProps {
 export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [imagePreview, setImagePreview] = useState(banner?.imageUrl || '')
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const { addBanner, updateBanner } = useBannerStore()
 
     const {
         register,
         handleSubmit,
         reset,
-        watch,
         setValue,
-        formState: { errors, isSubmitting }
+        watch,
+        formState: { errors }
     } = useForm<CreateBannerData>({
-        defaultValues: banner ? {
-            title: banner.title,
-            subtitle: banner.subtitle || '',
-            imageUrl: banner.imageUrl,
-            link: banner.link || '',
-            backgroundColor: banner.backgroundColor || '#3b82f6',
-            textColor: banner.textColor || '#ffffff',
-            isActive: banner.isActive,
-            order: banner.order
-        } : {
-            title: '',
-            subtitle: '',
-            imageUrl: '',
-            link: '',
-            backgroundColor: '#3b82f6',
-            textColor: '#ffffff',
-            isActive: true,
-            order: 1
+        defaultValues: {
+            title: banner?.title || '',
+            subtitle: banner?.subtitle || '',
+            description: banner?.description || '',
+            imageUrl: banner?.imageUrl || '',
+            linkUrl: banner?.linkUrl || '',
+            buttonText: banner?.buttonText || '',
+            isActive: banner?.isActive ?? true,
+            order: banner?.order || 0
         }
     })
 
-    const watchImageUrl = watch('imageUrl')
-    const watchTitle = watch('title')
-    const watchSubtitle = watch('subtitle')
-    const watchBackgroundColor = watch('backgroundColor')
-    const watchTextColor = watch('textColor')
+    const imageUrl = watch('imageUrl')
 
-    // Update preview when imageUrl changes
     useEffect(() => {
-        setImagePreview(watchImageUrl || '')
-    }, [watchImageUrl])
+        if (imageUrl) {
+            setImagePreview(imageUrl)
+        }
+    }, [imageUrl])
 
-    const onSubmit = (data: CreateBannerData) => {
+    useEffect(() => {
+        if (banner) {
+            reset({
+                title: banner.title,
+                subtitle: banner.subtitle || '',
+                description: banner.description || '',
+                imageUrl: banner.imageUrl,
+                linkUrl: banner.linkUrl || '',
+                buttonText: banner.buttonText || '',
+                isActive: banner.isActive,
+                order: banner.order || 0
+            })
+            setImagePreview(banner.imageUrl)
+        }
+    }, [banner, reset])
+
+    const onSubmit = async (data: CreateBannerData) => {
         try {
+            setIsSubmitting(true)
+
             if (banner) {
                 updateBanner(banner.id, data)
             } else {
@@ -79,7 +86,15 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
             onSuccess?.()
         } catch (error) {
             console.error('Error saving banner:', error)
+        } finally {
+            setIsSubmitting(false)
         }
+    }
+
+    const handleClose = () => {
+        reset()
+        setImagePreview('')
+        setIsOpen(false)
     }
 
     const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,264 +103,295 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
         setImagePreview(url)
     }
 
-    const clearImage = () => {
+    const removeImage = () => {
         setValue('imageUrl', '')
         setImagePreview('')
     }
 
-    // Suggested image URLs for demo
-    const suggestedImages = [
+    const presetImages = [
         {
-            url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=500&fit=crop',
-            label: 'Tienda moderna'
+            url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=400&fit=crop',
+            title: 'Tienda Moderna'
         },
         {
-            url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200&h=500&fit=crop',
-            label: 'Productos fashion'
+            url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop',
+            title: 'Productos Electrónicos'
         },
         {
-            url: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1200&h=500&fit=crop',
-            label: 'Electrónicos'
+            url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=400&fit=crop',
+            title: 'Ropa y Moda'
         }
     ]
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                {trigger || (
-                    <Button>
-                        {banner ? 'Editar Banner' : 'Nuevo Banner'}
-                    </Button>
-                )}
-            </DialogTrigger>
+        <>
+            {trigger && (
+                <div onClick={() => setIsOpen(true)}>
+                    {trigger}
+                </div>
+            )}
 
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>
-                        {banner ? 'Editar Banner' : 'Crear Nuevo Banner'}
-                    </DialogTitle>
-                </DialogHeader>
+            {!trigger && (
+                <Button onClick={() => setIsOpen(true)}>
+                    {banner ? 'Editar Banner' : 'Nuevo Banner'}
+                </Button>
+            )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Form */}
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="title">Título *</Label>
-                                <Input
-                                    id="title"
-                                    {...register('title', { required: 'El título es requerido' })}
-                                    placeholder="Título del banner"
-                                />
-                                {errors.title && (
-                                    <p className="text-sm text-red-500">{errors.title.message}</p>
-                                )}
+            <CustomModal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title={banner ? 'Editar Banner' : 'Crear Nuevo Banner'}
+                subtitle={banner ? 'Modifica la información del banner' : 'Completa los datos para crear un nuevo banner'}
+                size="xl"
+                footer={
+                    <div className="flex justify-end space-x-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleClose}
+                            disabled={isSubmitting}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="banner-form"
+                            disabled={isSubmitting}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            {isSubmitting ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Guardando...
+                                </div>
+                            ) : (
+                                banner ? 'Actualizar Banner' : 'Crear Banner'
+                            )}
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Formulario */}
+                    <div className="space-y-6">
+                        <form onSubmit={handleSubmit(onSubmit)} id="banner-form" className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="title">Título *</Label>
+                                    <Input
+                                        id="title"
+                                        {...register('title', { required: 'El título es requerido' })}
+                                        placeholder="Título del banner"
+                                        className="h-11"
+                                    />
+                                    {errors.title && (
+                                        <p className="text-sm text-red-500">{errors.title.message}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="subtitle">Subtítulo</Label>
+                                    <Input
+                                        id="subtitle"
+                                        {...register('subtitle')}
+                                        placeholder="Subtítulo opcional"
+                                        className="h-11"
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="order">Orden</Label>
-                                <Input
-                                    id="order"
-                                    type="number"
-                                    {...register('order', { valueAsNumber: true })}
-                                    placeholder="1"
+                                <Label htmlFor="description">Descripción</Label>
+                                <Textarea
+                                    id="description"
+                                    {...register('description')}
+                                    placeholder="Descripción del banner"
+                                    rows={3}
+                                    className="resize-none"
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="subtitle">Subtítulo</Label>
-                            <Textarea
-                                id="subtitle"
-                                {...register('subtitle')}
-                                placeholder="Subtítulo opcional del banner"
-                                rows={2}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="imageUrl">URL de Imagen</Label>
                             <div className="space-y-2">
-                                <div className="flex space-x-2">
+                                <Label htmlFor="imageUrl">URL de Imagen *</Label>
+                                <div className="flex gap-2">
                                     <Input
                                         id="imageUrl"
-                                        {...register('imageUrl')}
-                                        onChange={handleImageUrlChange}
+                                        {...register('imageUrl', {
+                                            required: 'La imagen es requerida',
+                                            onChange: handleImageUrlChange
+                                        })}
                                         placeholder="https://ejemplo.com/imagen.jpg"
-                                        className="flex-1"
+                                        className="h-11"
                                     />
                                     {imagePreview && (
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            size="icon"
-                                            onClick={clearImage}
+                                            size="sm"
+                                            onClick={removeImage}
+                                            className="h-11 px-3"
                                         >
                                             <X className="h-4 w-4" />
                                         </Button>
                                     )}
                                 </div>
+                                {errors.imageUrl && (
+                                    <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
+                                )}
 
-                                {/* Suggested Images */}
+                                {/* Imágenes predefinidas */}
                                 <div className="space-y-2">
-                                    <Label className="text-sm text-muted-foreground">Imágenes sugeridas:</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {suggestedImages.map((img, index) => (
-                                            <Button
+                                    <Label className="text-xs text-gray-600">Imágenes sugeridas:</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {presetImages.map((preset, index) => (
+                                            <div
                                                 key={index}
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
+                                                className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
                                                 onClick={() => {
-                                                    setValue('imageUrl', img.url)
-                                                    setImagePreview(img.url)
+                                                    setValue('imageUrl', preset.url)
+                                                    setImagePreview(preset.url)
                                                 }}
-                                                className="text-xs"
                                             >
-                                                {img.label}
-                                            </Button>
+                                                <Image
+                                                    src={preset.url}
+                                                    alt={preset.title}
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="(max-width: 768px) 33vw, 25vw"
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                                    <p className="text-white text-xs font-medium text-center">
+                                                        {preset.title}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="link">Enlace (opcional)</Label>
-                            <Input
-                                id="link"
-                                {...register('link')}
-                                placeholder="/categoria/ofertas"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="backgroundColor">Color de Fondo</Label>
-                                <div className="flex space-x-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="linkUrl">URL de Enlace</Label>
                                     <Input
-                                        id="backgroundColor"
-                                        type="color"
-                                        {...register('backgroundColor')}
-                                        className="w-16 h-10 p-1 border rounded"
+                                        id="linkUrl"
+                                        {...register('linkUrl')}
+                                        placeholder="https://ejemplo.com"
+                                        className="h-11"
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="buttonText">Texto del Botón</Label>
                                     <Input
-                                        {...register('backgroundColor')}
-                                        placeholder="#3b82f6"
-                                        className="flex-1"
+                                        id="buttonText"
+                                        {...register('buttonText')}
+                                        placeholder="Ver más"
+                                        className="h-11"
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="textColor">Color de Texto</Label>
-                                <div className="flex space-x-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="order">Orden</Label>
                                     <Input
-                                        id="textColor"
-                                        type="color"
-                                        {...register('textColor')}
-                                        className="w-16 h-10 p-1 border rounded"
-                                    />
-                                    <Input
-                                        {...register('textColor')}
-                                        placeholder="#ffffff"
-                                        className="flex-1"
+                                        id="order"
+                                        type="number"
+                                        {...register('order', { valueAsNumber: true })}
+                                        placeholder="0"
+                                        className="h-11"
                                     />
                                 </div>
+
+                                <div className="flex items-center space-x-2 pt-8">
+                                    <input
+                                        id="isActive"
+                                        type="checkbox"
+                                        {...register('isActive')}
+                                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <Label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                                        Banner activo
+                                    </Label>
+                                </div>
                             </div>
-                        </div>
+                        </form>
+                    </div>
 
-                        <div className="flex items-center space-x-2">
-                            <input
-                                id="isActive"
-                                type="checkbox"
-                                {...register('isActive')}
-                                className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <Label htmlFor="isActive">Banner activo</Label>
-                        </div>
-
-                        <div className="flex justify-end space-x-2 pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? 'Guardando...' : (banner ? 'Actualizar' : 'Crear')}
-                            </Button>
-                        </div>
-                    </form>
-
-                    {/* Preview */}
+                    {/* Vista Previa */}
                     <div className="space-y-4">
-                        <div>
-                            <Label className="text-sm font-medium">Vista Previa</Label>
-                            <p className="text-sm text-muted-foreground">
-                                Así se verá tu banner en la página principal
-                            </p>
-                        </div>
+                        <Label className="text-lg font-semibold">Vista Previa</Label>
 
-                        <Card className="overflow-hidden">
-                            <div
-                                className="relative h-48 flex items-center justify-center text-center"
-                                style={{
-                                    backgroundColor: watchBackgroundColor || '#3b82f6',
-                                    color: watchTextColor || '#ffffff'
-                                }}
-                            >
-                                {/* Background Image Preview */}
-                                {imagePreview && (
-                                    <div className="absolute inset-0">
+                        {imagePreview ? (
+                            <Card className="overflow-hidden">
+                                <CardContent className="p-0">
+                                    <div className="relative aspect-[2/1] bg-gray-100">
                                         <Image
                                             src={imagePreview}
                                             alt="Preview"
                                             fill
                                             className="object-cover"
-                                            onError={() => setImagePreview('')}
+                                            sizes="50vw"
                                         />
-                                        <div className="absolute inset-0 bg-black/30" />
+
+                                        {/* Overlay del contenido */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center">
+                                            <div className="p-8 text-white max-w-lg">
+                                                {watch('title') && (
+                                                    <h2 className="text-3xl font-bold mb-2">
+                                                        {watch('title')}
+                                                    </h2>
+                                                )}
+
+                                                {watch('subtitle') && (
+                                                    <h3 className="text-xl mb-4 opacity-90">
+                                                        {watch('subtitle')}
+                                                    </h3>
+                                                )}
+
+                                                {watch('description') && (
+                                                    <p className="text-sm mb-6 opacity-80 line-clamp-3">
+                                                        {watch('description')}
+                                                    </p>
+                                                )}
+
+                                                {watch('buttonText') && (
+                                                    <Button variant="secondary" size="lg">
+                                                        {watch('buttonText')}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Badge de estado */}
+                                        <div className="absolute top-4 right-4">
+                                            <Badge variant={watch('isActive') ? 'default' : 'secondary'}>
+                                                {watch('isActive') ? 'Activo' : 'Inactivo'}
+                                            </Badge>
+                                        </div>
                                     </div>
-                                )}
 
-                                {/* Content Preview */}
-                                <div className="relative z-10 px-4">
-                                    <h3 className="text-lg font-bold mb-2 drop-shadow-lg">
-                                        {watchTitle || 'Título del banner'}
-                                    </h3>
-                                    {watchSubtitle && (
-                                        <p className="text-sm opacity-90 drop-shadow-md mb-3">
-                                            {watchSubtitle}
-                                        </p>
-                                    )}
-                                    <Badge variant="secondary" className="text-xs">
-                                        Vista previa
-                                    </Badge>
-                                </div>
-                            </div>
-                        </Card>
-
-                        {/* Image info */}
-                        {imagePreview && (
-                            <Card>
-                                <CardContent className="p-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-sm font-medium">Información de imagen</Label>
-                                        <p className="text-xs text-muted-foreground break-all">
-                                            {imagePreview}
-                                        </p>
+                                    <div className="p-4 bg-gray-50">
                                         <div className="text-xs text-muted-foreground">
                                             💡 La imagen se optimizará automáticamente para diferentes tamaños de pantalla
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
+                        ) : (
+                            <Card className="border-dashed">
+                                <CardContent className="flex items-center justify-center h-64">
+                                    <div className="text-center text-gray-500">
+                                        <div className="text-4xl mb-2">🖼️</div>
+                                        <p>Agrega una URL de imagen para ver la vista previa</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         )}
                     </div>
                 </div>
-            </DialogContent>
-        </Dialog>
+            </CustomModal>
+        </>
     )
 }

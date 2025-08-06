@@ -6,3 +6,4 @@ export * from "./ProductGrid";
 export * from "./ProductModal";
 export * from "./HeroBanner";
 export * from "./CategoryGrid";
+export * from "./Footer";

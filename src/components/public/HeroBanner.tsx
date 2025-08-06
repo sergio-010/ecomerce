@@ -32,11 +32,11 @@ export function HeroBanner() {
     // Don't render anything until hydrated to prevent hydration mismatch
     if (!isHydrated) {
         return (
-            <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden rounded-lg shadow-soft bg-primary flex items-center justify-center">
-                <div className="text-primary-foreground text-center">
+            <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-600 text-center">
                     <div className="animate-pulse">
-                        <div className="h-8 bg-white/20 rounded mb-4 w-64 mx-auto"></div>
-                        <div className="h-4 bg-white/20 rounded w-48 mx-auto"></div>
+                        <div className="h-6 bg-gray-200 rounded mb-3 w-48 mx-auto"></div>
+                        <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
                     </div>
                 </div>
             </div>
@@ -58,12 +58,12 @@ export function HeroBanner() {
     }
 
     return (
-        <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden rounded-lg shadow-soft">
+        <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden border border-gray-200">
             <div
                 className="w-full h-full flex items-center justify-center text-center relative"
                 style={{
-                    backgroundColor: currentBanner.backgroundColor || '#3b82f6',
-                    color: currentBanner.textColor || '#ffffff'
+                    backgroundColor: currentBanner.backgroundColor || '#f8f9fa',
+                    color: currentBanner.textColor || '#000000'
                 }}
             >
                 {/* Background Image */}
@@ -77,30 +77,29 @@ export function HeroBanner() {
                             priority={currentIndex === 0}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
                         />
-                        {/* Overlay para mejorar legibilidad del texto */}
-                        <div className="absolute inset-0 bg-black/30" />
+                        {/* Overlay ligero para legibilidad */}
+                        <div className="absolute inset-0 bg-black/10" />
                     </div>
                 )}
 
                 {/* Content */}
                 <div className="relative z-10 px-4 max-w-4xl mx-auto">
-                    <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">
+                    <h1 className="text-2xl md:text-4xl font-medium mb-3">
                         {currentBanner.title}
                     </h1>
 
                     {currentBanner.subtitle && (
-                        <p className="text-lg md:text-xl mb-8 opacity-90 drop-shadow-md">
+                        <p className="text-base md:text-lg mb-6 opacity-80">
                             {currentBanner.subtitle}
                         </p>
                     )}
 
-                    {currentBanner.link && (
-                        <Link href={currentBanner.link}>
+                    {currentBanner.linkUrl && (
+                        <Link href={currentBanner.linkUrl}>
                             <Button
-                                size="lg"
-                                className="bg-white text-black hover:bg-gray-100 shadow-lg"
+                                className="bg-black text-white hover:bg-gray-800 px-6 py-2"
                             >
-                                Ver Productos
+                                {currentBanner.buttonText || "Ver Productos"}
                             </Button>
                         </Link>
                     )}
@@ -112,19 +111,19 @@ export function HeroBanner() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 bg-black/20 backdrop-blur-sm"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80"
                             onClick={goToPrevious}
                         >
-                            <ChevronLeft className="h-6 w-6" />
+                            <ChevronLeft className="h-5 w-5" />
                         </Button>
 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 bg-black/20 backdrop-blur-sm"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80"
                             onClick={goToNext}
                         >
-                            <ChevronRight className="h-6 w-6" />
+                            <ChevronRight className="h-5 w-5" />
                         </Button>
                     </>
                 )}
@@ -135,7 +134,7 @@ export function HeroBanner() {
                         {banners.map((_, index) => (
                             <button
                                 key={index}
-                                className={`w-3 h-3 rounded-full transition-all ${index === currentIndex ? 'bg-white scale-110' : 'bg-white/50'
+                                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? 'bg-gray-800' : 'bg-gray-400'
                                     }`}
                                 onClick={() => setCurrentIndex(index)}
                             />
