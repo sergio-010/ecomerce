@@ -11,6 +11,7 @@ import { useState } from "react"
 import { Product } from "@/types"
 import Image from "next/image"
 import { formatPrice } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function AdminProductsPage() {
     const [selectedProduct, setSelectedProduct] = useState<Product | undefined>()
@@ -28,9 +29,14 @@ export default function AdminProductsPage() {
     }
 
     const handleDelete = (id: string) => {
-        if (confirm("¿Estás seguro de que quieres eliminar este producto?")) {
-            deleteProduct(id)
-        }
+        const product = products.find(p => p.id === id)
+        toast.error(`¿Eliminar ${product?.name}?`, {
+            description: "Esta acción no se puede deshacer",
+            action: {
+                label: "Eliminar",
+                onClick: () => deleteProduct(id)
+            }
+        })
     }
 
     const handleView = (id: string) => {

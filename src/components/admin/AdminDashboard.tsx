@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, ShoppingCart, DollarSign, TrendingUp, AlertCircle, TestTube } from "lucide-react";
+import { toast } from "sonner";
 import Image from "next/image";
 
 export function AdminDashboard() {
@@ -27,7 +28,9 @@ export function AdminDashboard() {
         // Esta función solo está para demostrar la funcionalidad
         // En un entorno real, las órdenes vendrían de los usuarios
         if (products.length === 0) {
-            alert("Necesitas tener productos para generar órdenes de prueba");
+            toast.error("No hay productos disponibles", {
+                description: "Necesitas tener productos para generar órdenes de prueba"
+            });
             return;
         }
 
@@ -72,7 +75,9 @@ export function AdminDashboard() {
         }
 
         // Aquí normalmente agregarías las órdenes al store
-        alert(`Se generarían ${testOrders.length} órdenes de prueba. Esta función es solo para demostrar la interfaz.`);
+        toast.success("Órdenes de prueba generadas", {
+            description: `Se generarían ${testOrders.length} órdenes de prueba. Esta función es solo para demostrar la interfaz.`
+        });
     };
 
     // Estadísticas de órdenes

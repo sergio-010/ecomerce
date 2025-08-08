@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Product, CreateProductData } from "@/types";
+import { toast } from "sonner";
 
 interface ProductState {
   products: Product[];
@@ -22,22 +23,22 @@ interface ProductState {
   clearError: () => void;
 }
 
-// Mock data inicial
+// Mock data con productos organizados por categorías con imágenes profesionales
 const mockProducts: Product[] = [
+  // ========== ELECTRÓNICOS (ID: 1) ==========
   {
     id: "1",
-    name: "iPhone 15 Pro",
-    price: 3699900,
-    originalPrice: 4099900,
-    image:
-      "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400&h=400&fit=crop&q=80",
-    description: "El último iPhone con chip A17 Pro y cámara avanzada",
-    category: "Smartphones",
-    categoryId: "4",
+    name: "iPhone 15 Pro Max",
+    price: 4299900,
+    originalPrice: 4799900,
+    image: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    description: "El iPhone más avanzado con chip A17 Pro, cámara de 48MP con zoom óptico 5x y titanio de grado aeroespacial.",
+    category: "Electrónicos",
+    categoryId: "1",
     inStock: true,
     quantity: 25,
-    rating: 4.8,
-    reviews: 152,
+    rating: 4.9,
+    reviews: 342,
     freeShipping: true,
     hasPromotion: true,
     promotionPercentage: 10,
@@ -47,45 +48,27 @@ const mockProducts: Product[] = [
   },
   {
     id: "2",
-    name: "MacBook Air M2",
-    price: 4799900,
-    image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&q=80",
-    description: "Laptop ultradelgada con chip M2 y pantalla Retina",
+    name: "Samsung Galaxy S24 Ultra",
+    price: 3899900,
+    originalPrice: 4199900,
+    image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80",
+    description: "Smartphone premium con S Pen integrado, cámara de 200MP y pantalla Dynamic AMOLED 2X de 6.8\".",
     category: "Electrónicos",
     categoryId: "1",
     inStock: true,
-    quantity: 15,
-    rating: 4.9,
-    reviews: 89,
+    quantity: 18,
+    rating: 4.8,
+    reviews: 267,
     freeShipping: true,
-    hasPromotion: false,
-    createdAt: new Date(),
-  },
-  {
-    id: "3",
-    name: "Camiseta Premium",
-    price: 89900,
-    originalPrice: 119900,
-    image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&q=80",
-    description: "Camiseta de algodón orgánico con diseño moderno",
-    category: "Ropa",
-    categoryId: "2",
-    inStock: true,
-    quantity: 50,
-    rating: 4.5,
-    reviews: 234,
-    freeShipping: false,
     hasPromotion: true,
-    promotionPercentage: 25,
-    promotionStartDate: new Date("2024-01-15"),
-    promotionEndDate: new Date("2024-02-15"),
+    promotionPercentage: 7,
+    promotionStartDate: new Date("2024-02-01"),
+    promotionEndDate: new Date("2024-06-30"),
     createdAt: new Date(),
   },
 ];
 
-export const useProductStore = create<ProductState>()((set, get) => ({
+export const useProductStore = create<ProductState>((set, get) => ({
   products: mockProducts,
   isLoading: false,
   error: null,
@@ -107,77 +90,79 @@ export const useProductStore = create<ProductState>()((set, get) => ({
       promotionPercentage: data.promotionPercentage,
       promotionStartDate: data.promotionStartDate,
       promotionEndDate: data.promotionEndDate,
+      rating: 0,
+      reviews: 0,
       createdAt: new Date(),
     };
 
     set((state) => ({
       products: [...state.products, newProduct],
     }));
+
+    toast.success("Producto agregado exitosamente", {
+      description: `${newProduct.name} ha sido creado`
+    });
   },
 
-  updateProduct: (id: string, data: Partial<Product>) => {
+  updateProduct: (id, data) => {
     set((state) => ({
       products: state.products.map((product) =>
         product.id === id ? { ...product, ...data } : product
       ),
     }));
-  },
 
-  deleteProduct: (id: string) => {
-    set((state) => ({
-      products: state.products.filter((product) => product.id !== id),
-    }));
-  },
-
-  toggleProductStatus: (id: string) => {
-    set((state) => ({
-      products: state.products.map((product) =>
-        product.id === id ? { ...product, inStock: !product.inStock } : product
-      ),
-    }));
-  },
-
-  getProducts: () => {
-    const { products } = get();
-    return products;
-  },
-
-  getProductById: (id: string) => {
-    const { products } = get();
-    return products.find((product) => product.id === id);
-  },
-
-  getProductsByCategory: (categoryId: string) => {
-    const { products } = get();
-    return products.filter((product) => product.categoryId === categoryId);
-  },
-
-  getActiveProducts: () => {
-    const { products } = get();
-    return products.filter(
-      (product) => product.inStock && product.quantity > 0
-    );
-  },
-
-  getPromotionalProducts: () => {
-    const { products } = get();
-    const now = new Date();
-    return products.filter((product) => {
-      if (!product.hasPromotion) return false;
-
-      // Check if promotion is currently active
-      if (product.promotionStartDate && product.promotionEndDate) {
-        return (
-          now >= product.promotionStartDate && now <= product.promotionEndDate
-        );
-      }
-
-      return product.hasPromotion;
+    const product = get().products.find(p => p.id === id);
+    toast.success("Producto actualizado", {
+      description: `${product?.name} ha sido modificado`
     });
   },
 
-  searchProducts: (query: string) => {
-    const { products } = get();
+  deleteProduct: (id) => {
+    const product = get().products.find(p => p.id === id);
+    
+    set((state) => ({
+      products: state.products.filter((product) => product.id !== id),
+    }));
+
+    if (product) {
+      toast.success("Producto eliminado", {
+        description: `${product.name} ha sido eliminado del catálogo`
+      });
+    }
+  },
+
+  toggleProductStatus: (id) => {
+    set((state) => ({
+      products: state.products.map((product) =>
+        product.id === id
+          ? { ...product, inStock: !product.inStock }
+          : product
+      ),
+    }));
+
+    const product = get().products.find(p => p.id === id);
+    toast.success(
+      `Producto ${product?.inStock ? 'activado' : 'desactivado'}`,
+      { description: `Estado de "${product?.name}" actualizado` }
+    );
+  },
+
+  getProducts: () => get().products,
+
+  getProductById: (id) =>
+    get().products.find((product) => product.id === id),
+
+  getProductsByCategory: (categoryId) =>
+    get().products.filter((product) => product.categoryId === categoryId),
+
+  getActiveProducts: () =>
+    get().products.filter((product) => product.inStock),
+
+  getPromotionalProducts: () =>
+    get().products.filter((product) => product.hasPromotion),
+
+  searchProducts: (query) => {
+    const products = get().products;
     const lowercaseQuery = query.toLowerCase();
     return products.filter(
       (product) =>
@@ -187,9 +172,9 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     );
   },
 
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
+  setLoading: (loading) => set({ isLoading: loading }),
 
-  setError: (error: string | null) => set({ error }),
+  setError: (error) => set({ error }),
 
   clearError: () => set({ error: null }),
 }));

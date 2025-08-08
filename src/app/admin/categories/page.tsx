@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff, FolderOpen } from "lucide-react"
+import { toast } from "sonner"
 
 export default function CategoriesPage() {
     // Optimizar selectores para evitar bucles infinitos
@@ -17,15 +18,24 @@ export default function CategoriesPage() {
     const activateAllCategories = useCategoryStore((state) => state.activateAllCategories)
 
     const handleDelete = (id: string) => {
-        if (confirm('¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas las subcategorías.')) {
-            deleteCategory(id)
-        }
+        const category = categories.find(c => c.id === id)
+        toast.error(`¿Eliminar ${category?.name}?`, {
+            description: "Se eliminarán también todas las subcategorías",
+            action: {
+                label: "Eliminar",
+                onClick: () => deleteCategory(id)
+            }
+        })
     }
 
     const handleActivateAll = () => {
-        if (confirm('¿Quieres activar todas las categorías?')) {
-            activateAllCategories()
-        }
+        toast(`¿Activar todas las categorías?`, {
+            description: "Se activarán todas las categorías inactivas",
+            action: {
+                label: "Activar",
+                onClick: () => activateAllCategories()
+            }
+        })
     }
 
     // Calcular valores derivados en el componente en lugar de usar getters del store

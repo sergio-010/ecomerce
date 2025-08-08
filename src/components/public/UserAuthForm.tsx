@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface LoginFormInputs {
     email: string;
@@ -45,6 +46,10 @@ export function UserAuthForm() {
         setAuthError("");
 
         try {
+            toast.loading("Iniciando sesión...", {
+                description: "Verificando credenciales"
+            });
+
             const result = await signIn("credentials", {
                 email: data.email,
                 password: data.password,
@@ -52,11 +57,20 @@ export function UserAuthForm() {
             });
 
             if (result?.error) {
+                toast.error("Credenciales incorrectas", {
+                    description: "Verifica tu email y contraseña"
+                });
                 setAuthError("Credenciales incorrectas. Verifica tu email y contraseña.");
             } else if (result?.ok) {
+                toast.success("¡Bienvenido!", {
+                    description: "Has iniciado sesión exitosamente"
+                });
                 router.push("/");
             }
         } catch (_error) {
+            toast.error("Error al iniciar sesión", {
+                description: "Inténtalo de nuevo más tarde"
+            });
             setAuthError("Error al iniciar sesión. Inténtalo de nuevo.");
         }
     };
@@ -65,6 +79,9 @@ export function UserAuthForm() {
         setAuthError("");
 
         if (data.password !== data.confirmPassword) {
+            toast.error("Las contraseñas no coinciden", {
+                description: "Verifica que ambas contraseñas sean iguales"
+            });
             setAuthError("Las contraseñas no coinciden");
             return;
         }
@@ -72,8 +89,13 @@ export function UserAuthForm() {
         try {
             // Aquí iría la lógica de registro
             // Por ahora simulamos un registro exitoso
-            alert("Funcionalidad de registro en desarrollo. Por ahora usa las credenciales de prueba.");
+            toast.info("Funcionalidad en desarrollo", {
+                description: "Por ahora usa las credenciales de prueba"
+            });
         } catch (_error) {
+            toast.error("Error al crear la cuenta", {
+                description: "Inténtalo de nuevo más tarde"
+            });
             setAuthError("Error al crear la cuenta. Inténtalo de nuevo.");
         }
     };

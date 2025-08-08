@@ -1,316 +1,286 @@
 import { create } from "zustand";
-import type { Category, CreateCategoryData } from "@/types";
+import { devtools, persist } from "zustand/middleware";
+import { Category } from "@/types";
+import { toast } from "sonner";
 
-interface CategoryState {
+interface CategoryStore {
   categories: Category[];
   isLoading: boolean;
   error: string | null;
 
   // Actions
-  addCategory: (data: CreateCategoryData) => void;
-  updateCategory: (id: string, data: Partial<Category>) => void;
+  addCategory: (
+    category: Omit<Category, "id" | "createdAt" | "updatedAt">
+  ) => void;
+  updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   toggleCategoryStatus: (id: string) => void;
   activateAllCategories: () => void;
-  reorderCategories: (categories: Category[]) => void;
-  getAllCategories: () => Category[];
-  getActiveCategories: () => Category[];
-  getParentCategories: () => Category[];
-  getChildCategories: (parentId: string) => Category[];
   getCategoryById: (id: string) => Category | undefined;
-  getCategoryBySlug: (slug: string) => Category | undefined;
-  generateSlug: (name: string) => string;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  clearError: () => void;
+  getCategoriesByStatus: (isActive: boolean) => Category[];
 }
 
-// Mock data inicial
+// Mock data con categorías completas e imágenes profesionales
 const mockCategories: Category[] = [
   {
     id: "1",
     name: "Electrónicos",
     slug: "electronicos",
-    description: "Dispositivos electrónicos y gadgets",
+    description:
+      "Dispositivos electrónicos, smartphones, tablets y accesorios tecnológicos",
     imageUrl:
-      "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1498049794561-7780e7231661?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
     order: 1,
-    productCount: 25,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2024-01-01"),
   },
   {
     id: "2",
     name: "Ropa",
     slug: "ropa",
-    description: "Ropa y accesorios de moda",
+    description:
+      "Ropa de moda para hombres, mujeres y niños. Las últimas tendencias en vestimenta",
     imageUrl:
-      "https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
     order: 2,
-    productCount: 45,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date("2024-01-02"),
+    updatedAt: new Date("2024-01-02"),
   },
   {
     id: "3",
     name: "Hogar",
     slug: "hogar",
-    description: "Artículos para el hogar y decoración",
+    description:
+      "Muebles, decoración, electrodomésticos y artículos para el hogar",
     imageUrl:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
     order: 3,
-    productCount: 30,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date("2024-01-03"),
+    updatedAt: new Date("2024-01-03"),
   },
   {
     id: "4",
     name: "Deportes",
     slug: "deportes",
-    description: "Artículos deportivos y fitness",
+    description:
+      "Equipamiento deportivo, ropa deportiva y accesorios para fitness",
+    imageUrl:
+      "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
     order: 4,
-    productCount: 20,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date("2024-01-04"),
+    updatedAt: new Date("2024-01-04"),
   },
-  // Subcategorías de Electrónicos
   {
     id: "5",
-    name: "Smartphones",
-    slug: "smartphones",
-    description: "Teléfonos inteligentes y accesorios",
-    parentId: "1",
+    name: "Belleza",
+    slug: "belleza",
+    description:
+      "Productos de belleza, cuidado personal, cosméticos y fragancias",
+    imageUrl:
+      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 1,
-    productCount: 15,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 5,
+    createdAt: new Date("2024-01-05"),
+    updatedAt: new Date("2024-01-05"),
   },
   {
     id: "6",
-    name: "Laptops",
-    slug: "laptops",
-    description: "Computadoras portátiles",
-    parentId: "1",
+    name: "Libros",
+    slug: "libros",
+    description:
+      "Libros de todos los géneros, literatura, educación y entretenimiento",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 2,
-    productCount: 8,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 6,
+    createdAt: new Date("2024-01-06"),
+    updatedAt: new Date("2024-01-06"),
   },
   {
     id: "7",
-    name: "Tablets",
-    slug: "tablets",
-    description: "Tabletas y accesorios",
-    parentId: "1",
+    name: "Juguetes",
+    slug: "juguetes",
+    description:
+      "Juguetes para niños de todas las edades, educativos y de entretenimiento",
+    imageUrl:
+      "https://images.unsplash.com/photo-1558060370-d644479cb6f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 3,
-    productCount: 12,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 7,
+    createdAt: new Date("2024-01-07"),
+    updatedAt: new Date("2024-01-07"),
   },
-  // Subcategorías de Ropa
   {
     id: "8",
-    name: "Hombre",
-    slug: "ropa-hombre",
-    description: "Ropa para hombre",
-    parentId: "2",
+    name: "Automóvil",
+    slug: "automovil",
+    description:
+      "Accesorios para automóviles, repuestos y productos de mantenimiento",
+    imageUrl:
+      "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 1,
-    productCount: 25,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 8,
+    createdAt: new Date("2024-01-08"),
+    updatedAt: new Date("2024-01-08"),
   },
   {
     id: "9",
-    name: "Mujer",
-    slug: "ropa-mujer",
-    description: "Ropa para mujer",
-    parentId: "2",
+    name: "Mascotas",
+    slug: "mascotas",
+    description: "Productos para mascotas, alimentación, juguetes y accesorios",
+    imageUrl:
+      "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 2,
-    productCount: 30,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 9,
+    createdAt: new Date("2024-01-09"),
+    updatedAt: new Date("2024-01-09"),
   },
   {
     id: "10",
-    name: "Niños",
-    slug: "ropa-ninos",
-    description: "Ropa para niños",
-    parentId: "2",
+    name: "Jardín",
+    slug: "jardin",
+    description:
+      "Herramientas de jardinería, plantas, macetas y decoración exterior",
+    imageUrl:
+      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 3,
-    productCount: 18,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 10,
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-01-10"),
   },
-  // Subcategorías de Hogar
   {
     id: "11",
-    name: "Muebles",
-    slug: "muebles",
-    description: "Muebles para el hogar",
-    parentId: "3",
+    name: "Música",
+    slug: "musica",
+    description:
+      "Instrumentos musicales, equipos de audio y accesorios musicales",
+    imageUrl:
+      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 1,
-    productCount: 15,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 11,
+    createdAt: new Date("2024-01-11"),
+    updatedAt: new Date("2024-01-11"),
   },
   {
     id: "12",
-    name: "Decoración",
-    slug: "decoracion",
-    description: "Artículos decorativos",
-    parentId: "3",
+    name: "Oficina",
+    slug: "oficina",
+    description:
+      "Suministros de oficina, muebles para oficina y equipos de trabajo",
+    imageUrl:
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     isActive: true,
-    order: 2,
-    productCount: 22,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    order: 12,
+    createdAt: new Date("2024-01-12"),
+    updatedAt: new Date("2024-01-12"),
   },
 ];
 
-export const useCategoryStore = create<CategoryState>()((set, get) => ({
-  categories: mockCategories,
-  isLoading: false,
-  error: null,
+export const useCategoryStore = create<CategoryStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        categories: mockCategories,
+        isLoading: false,
+        error: null,
 
-  addCategory: (data: CreateCategoryData) => {
-    const { generateSlug } = get();
-    const slug = data.slug || generateSlug(data.name);
+        addCategory: (categoryData) => {
+          const newCategory: Category = {
+            ...categoryData,
+            id: Date.now().toString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
 
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name: data.name,
-      slug,
-      description: data.description,
-      imageUrl: data.imageUrl,
-      isActive: data.isActive ?? true,
-      order: data.order ?? get().categories.length + 1,
-      parentId: data.parentId,
-      productCount: 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+          set((state) => ({
+            categories: [...state.categories, newCategory],
+          }));
 
-    set((state) => ({
-      categories: [...state.categories, newCategory].sort(
-        (a, b) => a.order - b.order
-      ),
-    }));
-  },
+          toast.success("Categoría creada", {
+            description: `La categoría "${newCategory.name}" se ha creado exitosamente`,
+          });
+        },
 
-  updateCategory: (id: string, data: Partial<Category>) => {
-    set((state) => ({
-      categories: state.categories
-        .map((category) =>
-          category.id === id
-            ? { ...category, ...data, updatedAt: new Date() }
-            : category
-        )
-        .sort((a, b) => a.order - b.order),
-    }));
-  },
+        updateCategory: (id, categoryData) => {
+          set((state) => ({
+            categories: state.categories.map((category) =>
+              category.id === id
+                ? { ...category, ...categoryData, updatedAt: new Date() }
+                : category
+            ),
+          }));
 
-  deleteCategory: (id: string) => {
-    set((state) => ({
-      categories: state.categories.filter(
-        (category) => category.id !== id && category.parentId !== id
-      ),
-    }));
-  },
+          toast.success("Categoría actualizada", {
+            description: "Los cambios se han guardado correctamente",
+          });
+        },
 
-  toggleCategoryStatus: (id: string) => {
-    set((state) => ({
-      categories: state.categories.map((category) =>
-        category.id === id
-          ? {
+        deleteCategory: (id) => {
+          const category = get().categories.find((c) => c.id === id);
+
+          set((state) => ({
+            categories: state.categories.filter(
+              (category) => category.id !== id
+            ),
+          }));
+
+          toast.success("Categoría eliminada", {
+            description: `La categoría "${category?.name}" se ha eliminado correctamente`,
+          });
+        },
+
+        toggleCategoryStatus: (id) => {
+          const category = get().categories.find((c) => c.id === id);
+
+          set((state) => ({
+            categories: state.categories.map((category) =>
+              category.id === id
+                ? {
+                    ...category,
+                    isActive: !category.isActive,
+                    updatedAt: new Date(),
+                  }
+                : category
+            ),
+          }));
+
+          toast.info("Estado actualizado", {
+            description: `La categoría "${category?.name}" está ahora ${
+              category?.isActive ? "inactiva" : "activa"
+            }`,
+          });
+        },
+
+        activateAllCategories: () => {
+          set((state) => ({
+            categories: state.categories.map((category) => ({
               ...category,
-              isActive: !category.isActive,
+              isActive: true,
               updatedAt: new Date(),
-            }
-          : category
-      ),
-    }));
-  },
+            })),
+          }));
 
-  activateAllCategories: () => {
-    set((state) => ({
-      categories: state.categories.map((category) => ({
-        ...category,
-        isActive: true,
-        updatedAt: new Date(),
-      })),
-    }));
-  },
+          toast.success("Todas las categorías activadas", {
+            description: "Se han activado todas las categorías correctamente",
+          });
+        },
 
-  reorderCategories: (categories: Category[]) => {
-    const updatedCategories = categories.map((category, index) => ({
-      ...category,
-      order: index + 1,
-      updatedAt: new Date(),
-    }));
-    set({ categories: updatedCategories });
-  },
+        getCategoryById: (id) => {
+          return get().categories.find((category) => category.id === id);
+        },
 
-  getAllCategories: () => {
-    const { categories } = get();
-    return categories.sort((a, b) => a.order - b.order);
-  },
-
-  getActiveCategories: () => {
-    const { categories } = get();
-    return categories
-      .filter((category) => category.isActive)
-      .sort((a, b) => a.order - b.order);
-  },
-
-  getParentCategories: () => {
-    const { categories } = get();
-    return categories
-      .filter((category) => !category.parentId && category.isActive)
-      .sort((a, b) => a.order - b.order);
-  },
-
-  getChildCategories: (parentId: string) => {
-    const { categories } = get();
-    return categories
-      .filter((category) => category.parentId === parentId && category.isActive)
-      .sort((a, b) => a.order - b.order);
-  },
-
-  getCategoryById: (id: string) => {
-    const { categories } = get();
-    return categories.find((category) => category.id === id);
-  },
-
-  getCategoryBySlug: (slug: string) => {
-    const { categories } = get();
-    return categories.find((category) => category.slug === slug);
-  },
-
-  generateSlug: (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-  },
-
-  setLoading: (loading: boolean) => set({ isLoading: loading }),
-
-  setError: (error: string | null) => set({ error }),
-
-  clearError: () => set({ error: null }),
-}));
+        getCategoriesByStatus: (isActive) => {
+          return get().categories.filter(
+            (category) => category.isActive === isActive
+          );
+        },
+      }),
+      {
+        name: "category-store",
+      }
+    )
+  )
+);

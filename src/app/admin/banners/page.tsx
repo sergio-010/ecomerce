@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 
 export default function BannersPage() {
     // Optimizar selectores para evitar bucles infinitos
@@ -16,9 +17,14 @@ export default function BannersPage() {
     const toggleBannerStatus = useBannerStore((state) => state.toggleBannerStatus)
 
     const handleDelete = (id: string) => {
-        if (confirm('¿Estás seguro de que quieres eliminar este banner?')) {
-            deleteBanner(id)
-        }
+        const banner = banners.find(b => b.id === id)
+        toast.error(`¿Eliminar ${banner?.title}?`, {
+            description: "Esta acción no se puede deshacer",
+            action: {
+                label: "Eliminar",
+                onClick: () => deleteBanner(id)
+            }
+        })
     }
 
     return (

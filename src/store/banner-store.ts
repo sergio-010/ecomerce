@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Banner, CreateBannerData } from "@/types";
+import { toast } from "sonner";
 
 interface BannerState {
   banners: Banner[];
@@ -80,9 +81,15 @@ export const useBannerStore = create<BannerState>()((set, get) => ({
     set((state) => ({
       banners: [...state.banners, newBanner].sort((a, b) => a.order - b.order),
     }));
+
+    toast.success(`Banner creado`, {
+      description: `${data.title} ha sido agregado exitosamente`,
+    });
   },
 
   updateBanner: (id: string, data: Partial<Banner>) => {
+    const banner = get().banners.find((b) => b.id === id);
+
     set((state) => ({
       banners: state.banners
         .map((banner) =>
@@ -92,15 +99,31 @@ export const useBannerStore = create<BannerState>()((set, get) => ({
         )
         .sort((a, b) => a.order - b.order),
     }));
+
+    if (banner) {
+      toast.success(`Banner actualizado`, {
+        description: `${banner.title} ha sido modificado exitosamente`,
+      });
+    }
   },
 
   deleteBanner: (id: string) => {
+    const banner = get().banners.find((b) => b.id === id);
+
     set((state) => ({
       banners: state.banners.filter((banner) => banner.id !== id),
     }));
+
+    if (banner) {
+      toast.success(`Banner eliminado`, {
+        description: `${banner.title} ha sido eliminado exitosamente`,
+      });
+    }
   },
 
   toggleBannerStatus: (id: string) => {
+    const banner = get().banners.find((b) => b.id === id);
+
     set((state) => ({
       banners: state.banners.map((banner) =>
         banner.id === id
@@ -108,6 +131,13 @@ export const useBannerStore = create<BannerState>()((set, get) => ({
           : banner
       ),
     }));
+
+    if (banner) {
+      const status = banner.isActive ? "desactivado" : "activado";
+      toast.success(`Banner ${status}`, {
+        description: `${banner.title} ha sido ${status} exitosamente`,
+      });
+    }
   },
 
   reorderBanners: (banners: Banner[]) => {
@@ -117,6 +147,10 @@ export const useBannerStore = create<BannerState>()((set, get) => ({
       updatedAt: new Date(),
     }));
     set({ banners: updatedBanners });
+
+    toast.success(`Orden actualizado`, {
+      description: `El orden de los banners ha sido guardado`,
+    });
   },
 
   getActiveBanners: () => {

@@ -61,6 +61,14 @@ export function CartSheet({ open, onOpenChange }: Props) {
         }
     }
 
+    const handleRemoveItem = (productId: string) => {
+        removeItem(productId)
+    }
+
+    const handleClearCart = () => {
+        clearCart()
+    }
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:w-[480px] flex flex-col p-0">
@@ -119,7 +127,7 @@ export function CartSheet({ open, onOpenChange }: Props) {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => removeItem(item.product.id)}
+                                                    onClick={() => handleRemoveItem(item.product.id)}
                                                     className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0 self-end"
                                                 >
                                                     <Trash2 className="w-4 h-4" />

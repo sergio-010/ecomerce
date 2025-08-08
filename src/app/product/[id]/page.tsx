@@ -13,6 +13,7 @@ import { useCartStore } from "@/store/cart-store"
 import { useFavoritesStore } from "@/store/favorites-store"
 import { ArrowLeft, Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Plus, Minus } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
+import { toast } from "sonner"
 
 export default function ProductPage() {
     const params = useParams()
@@ -116,7 +117,11 @@ export default function ProductPage() {
             for (let i = 0; i < quantity; i++) {
                 addItem(product)
             }
-            alert(`${product.name} añadido al carrito (${quantity})`)
+            // El toast ya se muestra automáticamente desde el store
+        } else {
+            toast.error("Producto no disponible", {
+                description: "No hay suficiente stock disponible"
+            })
         }
     }
 

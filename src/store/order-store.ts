@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { Order, OrderStatus, CreateOrderData } from "@/types";
+import { toast } from "sonner";
 
 interface UserSession {
   user: {
@@ -74,6 +75,12 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
       isLoading: false,
     }));
 
+    toast.success(`Pedido creado`, {
+      description: `Pedido #${
+        orderId.split("_")[1]
+      } ha sido creado exitosamente`,
+    });
+
     return newOrder;
   },
 
@@ -86,6 +93,8 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
   },
 
   updateOrderStatus: (orderId: string, status: OrderStatus) => {
+    const order = get().orders.find((o) => o.id === orderId);
+
     set((state) => ({
       orders: state.orders.map((order: Order) =>
         order.id === orderId
@@ -93,6 +102,23 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
           : order
       ),
     }));
+
+    if (order) {
+      const statusMessages = {
+        pending: "pendiente",
+        confirmed: "confirmado",
+        processing: "en proceso",
+        shipped: "enviado",
+        delivered: "entregado",
+        cancelled: "cancelado",
+      };
+
+      toast.success(`Estado actualizado`, {
+        description: `Pedido #${orderId.split("_")[1]} ahora está ${
+          statusMessages[status]
+        }`,
+      });
+    }
   },
 
   getOrderById: (orderId: string) => {
@@ -100,6 +126,13 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
   },
 
   cancelOrder: (orderId: string) => {
+    const order = get().orders.find((o) => o.id === orderId);
     get().updateOrderStatus(orderId, "cancelled");
+
+    if (order) {
+      toast.success(`Pedido cancelado`, {
+        description: `Pedido #${orderId.split("_")[1]} ha sido cancelado`,
+      });
+    }
   },
 }));

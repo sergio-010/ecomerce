@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useCartStore } from "@/store/cart-store";
 import { useOrderStore } from "@/store/order-store";
-import { useNotifications } from "@/components/ui/notifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ShippingForm {
     street: string;
@@ -37,7 +37,6 @@ export function CheckoutForm() {
     // Calcular el total directamente
     const getTotalPrice = () => items.reduce((total, item) => total + item.quantity * item.product.price, 0)
 
-    const { showSuccess, showError } = useNotifications();
     const [shippingForm, setShippingForm] = useState<ShippingForm>({
         street: "",
         city: "",
@@ -53,7 +52,9 @@ export function CheckoutForm() {
     useEffect(() => {
         const timer = setTimeout(() => {
             if (items.length === 0) {
-                showError("Carrito vacío", "No hay productos en tu carrito. Añade algunos productos antes de proceder al checkout.");
+                toast.error("Carrito vacío", {
+                    description: "No hay productos en tu carrito. Añade algunos productos antes de proceder al checkout."
+                });
                 router.push('/');
             } else {
                 setIsCheckingCart(false);
@@ -61,7 +62,7 @@ export function CheckoutForm() {
         }, 100); // Pequeño delay para asegurar que el estado se haya hidratado
 
         return () => clearTimeout(timer);
-    }, [items.length, router, showError]); const handleInputChange = (field: keyof ShippingForm, value: string) => {
+    }, [items.length, router]); const handleInputChange = (field: keyof ShippingForm, value: string) => {
         setShippingForm(prev => ({ ...prev, [field]: value }));
     };
 
@@ -69,17 +70,25 @@ export function CheckoutForm() {
         e.preventDefault();
 
         if (!session?.user) {
-            showError("Acceso requerido", "Debes iniciar sesión para realizar una compra");
+            toast.error("Acceso requerido", {
+                description: "Debes iniciar sesión para realizar una compra"
+            });
             router.push("/auth");
             return;
         }
 
         if (items.length === 0) {
-            showError("Carrito vacío", "No hay productos en tu carrito para procesar");
+            toast.error("Carrito vacío", {
+                description: "No hay productos en tu carrito para procesar"
+            });
             return;
         }
 
         try {
+            toast.loading("Procesando pedido...", {
+                description: "Estamos creando tu orden"
+            });
+
             const order = await createOrder({
                 items,
                 shippingAddress: {
@@ -94,23 +103,20 @@ export function CheckoutForm() {
             }, session);
 
             clearCart();
-            showSuccess(
-                "¡Orden creada exitosamente!",
-                `Tu orden #${order.id.slice(-8)} ha sido registrada`,
-                {
-                    action: {
-                        label: "Ver orden",
-                        onClick: () => router.push(`/orders/${order.id}`)
-                    }
+
+            toast.success("¡Orden creada exitosamente!", {
+                description: `Tu orden #${order.id.slice(-8)} ha sido registrada`,
+                action: {
+                    label: "Ver orden",
+                    onClick: () => router.push(`/orders/${order.id}`)
                 }
-            );
+            });
             router.push(`/orders/${order.id}`);
         } catch (error) {
             console.error("Error al crear la orden:", error);
-            showError(
-                "Error al procesar la orden",
-                "Hubo un problema al crear tu orden. Por favor intenta de nuevo."
-            );
+            toast.error("Error al procesar la orden", {
+                description: "Hubo un problema al crear tu orden. Por favor intenta de nuevo."
+            });
         }
     };
 

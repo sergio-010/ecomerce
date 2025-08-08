@@ -4,6 +4,7 @@ import { Button } from "../ui/button"
 import { Heart, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCartStore } from "@/store/cart-store"
+import { useFavoritesStore } from "@/store/favorites-store"
 import { formatPrice } from "@/lib/utils"
 
 interface ProductCardProps {
@@ -13,6 +14,10 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
     const router = useRouter()
     const addItem = useCartStore((state) => state.addItem)
+    const addToFavorites = useFavoritesStore((state) => state.addToFavorites)
+    const removeFromFavorites = useFavoritesStore((state) => state.removeFromFavorites)
+    const isFavorite = useFavoritesStore((state) => state.isFavorite)
+    const isProductFavorite = isFavorite(product.id)
     const hasDiscount = product.originalPrice && product.originalPrice > product.price
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100) : 0
 
@@ -23,7 +28,15 @@ export function ProductCard({ product }: ProductCardProps) {
     const handleAddToCart = (e: React.MouseEvent) => {
         e.stopPropagation()
         addItem(product)
-        console.log('Producto agregado al carrito:', product)
+    }
+
+    const handleToggleFavorite = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (isProductFavorite) {
+            removeFromFavorites(product.id)
+        } else {
+            addToFavorites(product)
+        }
     }
 
     return (
@@ -52,11 +65,9 @@ export function ProductCard({ product }: ProductCardProps) {
                 {/* Botón de favoritos minimalista */}
                 <button
                     className="absolute top-2 right-2 p-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:shadow-md"
-                    onClick={(e) => {
-                        e.stopPropagation()
-                    }}
+                    onClick={handleToggleFavorite}
                 >
-                    <Heart className="w-4 h-4 text-gray-600" />
+                    <Heart className={`w-4 h-4 ${isProductFavorite ? 'text-red-500 fill-red-500' : 'text-gray-600'}`} />
                 </button>
             </div>
 

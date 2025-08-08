@@ -4,6 +4,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout"
 import { Button } from "@/components/ui/button"
 import { Save } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 
 export default function AdminSettingsPage() {
     const [settings, setSettings] = useState({
@@ -18,7 +19,9 @@ export default function AdminSettingsPage() {
     const handleSave = () => {
         console.log("Guardando configuración:", settings)
         // Aquí guardarías en tu backend
-        alert("Configuración guardada correctamente")
+        toast.success("Configuración guardada", {
+            description: "Los cambios se han aplicado correctamente"
+        })
     }
 
     const handleChange = (field: string, value: string) => {

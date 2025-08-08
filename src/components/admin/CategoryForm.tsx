@@ -71,7 +71,10 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
 
             const categoryData = {
                 ...data,
-                parentId: selectedParent === 'none' ? undefined : selectedParent
+                parentId: selectedParent === 'none' ? undefined : selectedParent,
+                order: data.order ?? 0,
+                slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
+                isActive: data.isActive ?? true
             }
 
             if (category) {

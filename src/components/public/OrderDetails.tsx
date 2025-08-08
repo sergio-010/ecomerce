@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
 
 interface OrderDetailsProps {
     orderId: string;
@@ -31,22 +33,33 @@ const statusLabels = {
 };
 
 export function OrderDetails({ orderId }: OrderDetailsProps) {
-    // Optimizar selectores para evitar bucles infinitos - calcular directamente
-    const orders = useOrderStore((state) => state.orders)
-    const cancelOrder = useOrderStore((state) => state.cancelOrder)
     const { data: session } = useSession();
     const router = useRouter();
+
+    // Optimizar selectores para evitar bucles infinitos
+    const orders = useOrderStore((state) => state.orders)
+    const cancelOrder = useOrderStore((state) => state.cancelOrder)
+
+    // Estado local del componente
     const [order, setOrder] = useState<Order | undefined>();
 
     useEffect(() => {
         const foundOrder = orders.find(order => order.id === orderId);
         setOrder(foundOrder);
-    }, [orderId, orders]); const handleCancelOrder = () => {
+    }, [orderId, orders]);
+
+    const handleCancelOrder = () => {
         if (order && (order.status === "pending" || order.status === "confirmed")) {
-            if (confirm("¿Estás seguro de que quieres cancelar esta orden?")) {
-                cancelOrder(order.id);
-                setOrder({ ...order, status: "cancelled" });
-            }
+            toast.error("¿Cancelar esta orden?", {
+                description: "Esta acción no se puede deshacer",
+                action: {
+                    label: "Cancelar orden",
+                    onClick: () => {
+                        cancelOrder(order.id);
+                        setOrder({ ...order, status: "cancelled" });
+                    }
+                }
+            })
         }
     };
 
@@ -59,152 +72,140 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
         );
     }
 
-    // Verificar permisos
-    if (!session?.user) {
-        return (
-            <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4">Acceso denegado</h2>
-                <p className="text-gray-600 mb-4">Debes iniciar sesión para ver esta orden.</p>
-                <Button onClick={() => router.push("/auth")}>
-                    Iniciar Sesión
-                </Button>
-            </div>
-        );
-    }
+    const canCancel = order.status === "pending" || order.status === "confirmed";
+    const orderDate = new Date(order.createdAt).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 
-    if (session.user.role !== "admin" && session.user.id !== order.userId) {
-        return (
-            <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4">Acceso denegado</h2>
-                <p className="text-gray-600">No tienes permisos para ver esta orden.</p>
-            </div>
-        );
-    } return (
-        <div className="max-w-4xl mx-auto p-6 space-y-6">
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold">Orden #{order.id}</h1>
-                    <p className="text-gray-600">
-                        Creada el {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Badge className={statusColors[order.status]}>
-                        {statusLabels[order.status]}
-                    </Badge>
-                    {(order.status === "pending" || order.status === "confirmed") && (
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleCancelOrder}
-                        >
-                            Cancelar Orden
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-                {/* Información del cliente */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Información del Cliente</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <p><strong>Nombre:</strong> {order.userName}</p>
-                        <p><strong>Email:</strong> {order.userEmail}</p>
-                        <p><strong>Teléfono:</strong> {order.phone}</p>
-                    </CardContent>
-                </Card>
-
-                {/* Dirección de envío */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Dirección de Envío</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        <p>{order.shippingAddress.street}</p>
-                        <p>
-                            {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}
-                        </p>
-                        <p>{order.shippingAddress.country}</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Productos de la orden */}
+    return (
+        <div className="space-y-6 max-w-4xl mx-auto">
+            {/* Header de la orden */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Productos</CardTitle>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="text-2xl">Orden #{order.id.slice(-8)}</CardTitle>
+                            <CardDescription className="text-base mt-2">
+                                Realizada el {orderDate}
+                            </CardDescription>
+                        </div>
+                        <div className="text-right">
+                            <Badge className={statusColors[order.status as keyof typeof statusColors]}>
+                                {statusLabels[order.status as keyof typeof statusLabels]}
+                            </Badge>
+                            <div className="mt-2 text-2xl font-bold">
+                                {formatPrice(order.totalAmount)}
+                            </div>
+                        </div>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            {/* Información del cliente */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Información de entrega</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 className="font-semibold mb-2">Cliente</h4>
+                            <p>{order.userName}</p>
+                            <p className="text-gray-600">{order.userEmail}</p>
+                            {order.phone && <p className="text-gray-600">{order.phone}</p>}
+                        </div>
+                        <div>
+                            <h4 className="font-semibold mb-2">Dirección de envío</h4>
+                            {order.shippingAddress ? (
+                                <div className="text-gray-600">
+                                    <p>{order.shippingAddress.street}</p>
+                                    <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                                    <p>{order.shippingAddress.zipCode}</p>
+                                    <p>{order.shippingAddress.country}</p>
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">No especificada</p>
+                            )}
+                        </div>
+                    </div>
+                    {order.notes && (
+                        <div className="mt-4">
+                            <h4 className="font-semibold mb-2">Notas adicionales</h4>
+                            <p className="text-gray-600">{order.notes}</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Items de la orden */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Productos ordenados</CardTitle>
                     <CardDescription>
-                        {order.items.length} producto{order.items.length !== 1 ? "s" : ""} en esta orden
+                        {order.items.length} {order.items.length === 1 ? 'producto' : 'productos'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {order.items.map((item) => (
-                            <div key={item.productId} className="flex justify-between items-center border-b pb-4">
-                                <div className="flex items-center space-x-3">
+                        {order.items.map((item, index: number) => (
+                            <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
+                                <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
                                     <Image
-                                        src={item.productImage}
+                                        src={item.productImage || "/placeholder.svg"}
                                         alt={item.productName}
-                                        width={64}
-                                        height={64}
-                                        className="object-cover rounded"
+                                        fill
+                                        className="object-cover"
+                                        sizes="64px"
                                     />
-                                    <div>
-                                        <h3 className="font-medium">{item.productName}</h3>
-                                        <p className="text-sm text-gray-600">
-                                            ${item.price.toFixed(2)} x {item.quantity}
-                                        </p>
-                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-semibold">{item.productName}</h4>
+                                    <p className="text-gray-600">Cantidad: {item.quantity}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-semibold">
-                                        ${(item.price * item.quantity).toFixed(2)}
-                                    </p>
+                                    <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
+                                    <p className="text-sm text-gray-600">{formatPrice(item.price)} c/u</p>
                                 </div>
                             </div>
                         ))}
+                    </div>
 
-                        <div className="border-t pt-4">
-                            <div className="flex justify-between items-center text-xl font-bold">
-                                <span>Total:</span>
-                                <span>${order.totalAmount.toFixed(2)}</span>
-                            </div>
+                    {/* Total */}
+                    <div className="border-t pt-4 mt-6">
+                        <div className="flex justify-between items-center text-lg font-bold">
+                            <span>Total:</span>
+                            <span>{formatPrice(order.totalAmount)}</span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            {/* Notas */}
-            {order.notes && (
+            {/* Acciones */}
+            {canCancel && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Notas</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>{order.notes}</p>
+                    <CardContent className="pt-6">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h4 className="font-semibold">¿Necesitas cancelar tu orden?</h4>
+                                <p className="text-gray-600 text-sm">
+                                    Puedes cancelar tu orden mientras esté en estado pendiente o confirmado.
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={handleCancelOrder}
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                                Cancelar orden
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             )}
-
-            {/* Historial de estado */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Historial</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <p className="text-sm">
-                            <strong>Creada:</strong> {new Date(order.createdAt).toLocaleString()}
-                        </p>
-                        <p className="text-sm">
-                            <strong>Última actualización:</strong> {new Date(order.updatedAt).toLocaleString()}
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { AuthProvider } from "@/components/providers/AuthProvider"
 import { StoreProvider } from "@/components/providers/StoreProvider"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,6 +24,13 @@ export default function RootLayout({
         <AuthProvider>
           <StoreProvider>
             {children}
+            <Toaster
+              position="top-right"
+              richColors
+              expand
+              visibleToasts={4}
+              closeButton
+            />
           </StoreProvider>
         </AuthProvider>
       </body>
