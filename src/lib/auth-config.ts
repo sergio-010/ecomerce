@@ -1,33 +1,11 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
-// Mock users database - en producción esto vendría de una base de datos real
-const users = [
-  {
-    id: "1",
-    email: "admin@tienda.com",
-    name: "Administrador",
-    role: "admin",
-    password: "$2b$12$O18.gJEMoFA93UzyKtPxWuX/uv3/2EC.yKpc0kt.EqhYBYRrohL5u", // admin123
-  },
-  {
-    id: "2",
-    email: "usuario@tienda.com",
-    name: "Usuario Test",
-    role: "user",
-    password: "$2b$12$O18.gJEMoFA93UzyKtPxWuX/uv3/2EC.yKpc0kt.EqhYBYRrohL5u", // admin123
-  },
-  {
-    id: "3",
-    email: "cliente@test.com",
-    name: "Cliente Demo",
-    role: "user",
-    password: "$2b$12$O18.gJEMoFA93UzyKtPxWuX/uv3/2EC.yKpc0kt.EqhYBYRrohL5u", // admin123
-  },
-];
-
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma) as any,
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -47,20 +25,18 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
-          const user = users.find((u) => u.email === credentials.email);
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          });
 
-          if (!user) {
+          if (!user || !user.password) {
             console.log("User not found:", credentials.email);
-            console.log(
-              "Available users:",
-              users.map((u) => u.email)
-            );
             return null;
           }
 
           console.log("User found:", user.email);
-          console.log("Stored hash:", user.password);
-          console.log("Password to compare:", credentials.password);
 
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
@@ -79,6 +55,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
+            image: user.image,
             role: user.role,
           };
         } catch (error) {

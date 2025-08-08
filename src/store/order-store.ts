@@ -1,138 +1,92 @@
 import { create } from "zustand";
-import { Order, OrderStatus, CreateOrderData } from "@/types";
-import { toast } from "sonner";
-
-interface UserSession {
-  user: {
-    id?: string;
-    email?: string | null;
-    name?: string | null;
-  };
-}
+import { persist } from "zustand/middleware";
+import { useNotificationStore } from "./notification-store";
+import { Order, OrderStatus } from "@/types";
 
 interface OrderState {
   orders: Order[];
-  isLoading: boolean;
-  createOrder: (
-    orderData: CreateOrderData,
-    userSession: UserSession
-  ) => Promise<Order>;
-  getUserOrders: (userId: string) => Order[];
-  getAllOrders: () => Order[];
+  addOrder: (orderData: any) => Promise<string>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
-  getOrderById: (orderId: string) => Order | undefined;
   cancelOrder: (orderId: string) => void;
 }
 
-export const useOrderStore = create<OrderState>()((set, get) => ({
-  orders: [],
-  isLoading: false,
+export const useOrderStore = create<OrderState>()(
+  persist(
+    (set, get) => ({
+      orders: [],
 
-  createOrder: async (
-    orderData: CreateOrderData,
-    userSession: UserSession
-  ): Promise<Order> => {
-    set({ isLoading: true });
+      addOrder: async (orderData) => {
+        const order: Order = {
+          id: `order_${Date.now()}`,
+          orderNumber: `ORD-${Date.now()}`,
+          status: "PENDING" as OrderStatus,
+          subtotal: orderData.subtotal || 0,
+          tax: orderData.tax || 0,
+          shipping: orderData.shipping || 0,
+          discount: 0,
+          total: orderData.total || 0,
+          currency: "USD",
+          billingAddress: JSON.stringify(orderData.shippingAddress || {}),
+          shippingAddress: JSON.stringify(orderData.shippingAddress || {}),
+          paymentStatus: "PENDING",
+          paymentMethod: orderData.paymentMethod || "card",
+          paymentId: null,
+          shippingMethod: "standard",
+          trackingNumber: null,
+          estimatedDelivery: null,
+          deliveredAt: null,
+          notes: orderData.notes || null,
+          adminNotes: null,
+          userId: orderData.userId || "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    if (!userSession?.user) {
-      throw new Error("Usuario no autenticado");
+        set((state) => ({
+          orders: [...state.orders, order],
+        }));
+
+        useNotificationStore.getState().addNotification({
+          type: "success",
+          title: "Pedido creado exitosamente",
+          message: `Número de orden: ${order.orderNumber}`,
+        });
+
+        return order.id;
+      },
+
+      updateOrderStatus: (orderId, status) => {
+        set((state) => ({
+          orders: state.orders.map((order) =>
+            order.id === orderId
+              ? { ...order, status, updatedAt: new Date() }
+              : order
+          ),
+        }));
+
+        const statusMessages = {
+          PENDING: "está pendiente",
+          CONFIRMED: "confirmado",
+          PROCESSING: "en procesamiento",
+          SHIPPED: "enviado",
+          DELIVERED: "entregado",
+          CANCELLED: "cancelado",
+          REFUNDED: "reembolsado",
+        };
+
+        useNotificationStore.getState().addNotification({
+          type: "success",
+          title: `Pedido ${statusMessages[status]}`,
+          message: statusMessages[status],
+        });
+      },
+
+      cancelOrder: (orderId) => {
+        get().updateOrderStatus(orderId, "CANCELLED");
+      },
+    }),
+    {
+      name: "order-store",
     }
-
-    const orderId = `order_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-
-    const orderItems = orderData.items.map((item) => ({
-      productId: item.product.id,
-      productName: item.product.name,
-      productImage: item.product.images?.[0] || item.product.image || "",
-      price: item.product.price,
-      quantity: item.quantity,
-    }));
-
-    const totalAmount = orderItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
-
-    const newOrder: Order = {
-      id: orderId,
-      userId: userSession.user.id || "unknown",
-      userEmail: userSession.user.email || "unknown@email.com",
-      userName: userSession.user.name || "Usuario Anónimo",
-      items: orderItems,
-      totalAmount,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      shippingAddress: orderData.shippingAddress,
-      phone: orderData.phone,
-      notes: orderData.notes,
-    };
-
-    set((state) => ({
-      orders: [...state.orders, newOrder],
-      isLoading: false,
-    }));
-
-    toast.success(`Pedido creado`, {
-      description: `Pedido #${
-        orderId.split("_")[1]
-      } ha sido creado exitosamente`,
-    });
-
-    return newOrder;
-  },
-
-  getUserOrders: (userId: string) => {
-    return get().orders.filter((order: Order) => order.userId === userId);
-  },
-
-  getAllOrders: () => {
-    return get().orders;
-  },
-
-  updateOrderStatus: (orderId: string, status: OrderStatus) => {
-    const order = get().orders.find((o) => o.id === orderId);
-
-    set((state) => ({
-      orders: state.orders.map((order: Order) =>
-        order.id === orderId
-          ? { ...order, status, updatedAt: new Date().toISOString() }
-          : order
-      ),
-    }));
-
-    if (order) {
-      const statusMessages = {
-        pending: "pendiente",
-        confirmed: "confirmado",
-        processing: "en proceso",
-        shipped: "enviado",
-        delivered: "entregado",
-        cancelled: "cancelado",
-      };
-
-      toast.success(`Estado actualizado`, {
-        description: `Pedido #${orderId.split("_")[1]} ahora está ${
-          statusMessages[status]
-        }`,
-      });
-    }
-  },
-
-  getOrderById: (orderId: string) => {
-    return get().orders.find((order: Order) => order.id === orderId);
-  },
-
-  cancelOrder: (orderId: string) => {
-    const order = get().orders.find((o) => o.id === orderId);
-    get().updateOrderStatus(orderId, "cancelled");
-
-    if (order) {
-      toast.success(`Pedido cancelado`, {
-        description: `Pedido #${orderId.split("_")[1]} ha sido cancelado`,
-      });
-    }
-  },
-}));
+  )
+);

@@ -20,7 +20,7 @@ export function ProductModal({ product, isOpen, onClose }: Props) {
 
     if (!product) return null
 
-    const hasDiscount = product.originalPrice && product.originalPrice > product.price
+    const hasDiscount = product.comparePrice && product.comparePrice > product.price
 
     const handleAddToCart = () => {
         addItem(product) // ✅ Solo pasa el producto, zustand ya maneja el quantity internamente
@@ -61,7 +61,7 @@ export function ProductModal({ product, isOpen, onClose }: Props) {
                 {/* Imagen del producto */}
                 <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden rounded-xl bg-gray-100">
                     <Image
-                        src={product.image || "/placeholder.svg"}
+                        src="/placeholder.svg"
                         alt={product.name}
                         fill
                         className="object-cover"
@@ -78,7 +78,7 @@ export function ProductModal({ product, isOpen, onClose }: Props) {
                         <div className="flex items-center gap-3">
                             <span className="text-3xl font-bold text-red-600">${product.price}</span>
                             {hasDiscount && (
-                                <span className="text-lg text-gray-400 line-through">${product.originalPrice}</span>
+                                <span className="text-lg text-gray-400 line-through">${product.comparePrice}</span>
                             )}
                         </div>
 

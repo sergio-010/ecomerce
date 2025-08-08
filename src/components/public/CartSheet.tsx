@@ -100,18 +100,9 @@ export function CartSheet({ open, onOpenChange }: Props) {
                                     <div key={item.product.id} className="bg-gray-50 rounded-xl p-4 space-y-4">
                                         <div className="flex gap-4">
                                             <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                                {item.product.image ? (
-                                                    <Image
-                                                        src={item.product.image}
-                                                        alt={item.product.name}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                        <ShoppingBag className="w-8 h-8 text-gray-400" />
-                                                    </div>
-                                                )}
+                                                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                                    <ShoppingBag className="w-8 h-8 text-gray-400" />
+                                                </div>
                                             </div>
                                             <div className="flex-1 min-w-0 space-y-2">
                                                 <div>

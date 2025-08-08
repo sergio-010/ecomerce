@@ -47,7 +47,7 @@ const mockBanners: Banner[] = [
     link: "/category/ropa",
     isActive: true,
     sortOrder: 2,
-    position: "SIDEBAR",
+    position: "CATEGORY",
     startDate: null,
     endDate: null,
     categoryId: null,

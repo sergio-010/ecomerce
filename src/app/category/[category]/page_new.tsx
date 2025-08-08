@@ -4,19 +4,28 @@ import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { useCategoryStore } from "@/store/category-store"
 import { useProductStore } from "@/store/product-store"
+import { CategoryGrid } from "@/components/public/CategoryGrid"
+import { ProductGrid } from "@/components/public/ProductGrid"
 import { Navbar } from "@/components/public/Navbar"
 import { Footer } from "@/components/public/Footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
 import { Filter, Grid, List, ArrowUpDown } from "lucide-react"
 import Image from "next/image"
 import type { Product, Category } from "@/types"
 
-export default function CategoryPage() {
-    const params = useParams()
-    const categorySlug = params.category as string
+interface PageProps {
+    params: Promise<{
+        category: string
+    }>
+}
+
+export default function CategoryPage({ params }: PageProps) {
+    const resolvedParams = use(params)
+    const { category: categorySlug } = resolvedParams
 
     const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
@@ -25,32 +34,28 @@ export default function CategoryPage() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
     const [showFilters, setShowFilters] = useState(false)
 
-    // Store data
-    const categories = useCategoryStore((state) => state.categories)
-    const products = useProductStore((state) => state.products)
-
-    // Helper function to get category by slug
-    const getCategoryBySlug = (slug: string) => {
-        return categories.find(cat => cat.slug === slug && cat.isActive) || null
-    }
+    // Store actions
+    const getCategoryBySlug = useCategoryStore((state) => state.getCategoryBySlug)
+    const getAllCategories = useCategoryStore((state) => state.categories)
+    const getProducts = useProductStore((state) => state.products)
 
     // Cargar categoría actual
     useEffect(() => {
         const category = getCategoryBySlug(categorySlug)
-        setCurrentCategory(category)
-    }, [categorySlug, categories])
+        setCurrentCategory(category || null)
+    }, [categorySlug, getCategoryBySlug])
 
     // Filtrar productos por categoría
     useEffect(() => {
         if (currentCategory) {
-            const categoryProducts = products.filter(product =>
+            const categoryProducts = getProducts.filter(product =>
                 product.categoryId === currentCategory.id && product.isActive
             )
             setFilteredProducts(categoryProducts)
         } else {
             setFilteredProducts([])
         }
-    }, [currentCategory, products])
+    }, [currentCategory, getProducts])
 
     // Aplicar filtros y ordenamiento
     const applyFiltersAndSort = () => {
@@ -192,21 +197,17 @@ export default function CategoryPage() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <h3 className="font-semibold mb-3">Rango de Precio</h3>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            value={priceRange[0]}
-                                            onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
-                                            className="w-20 px-2 py-1 border rounded"
-                                            placeholder="Min"
-                                        />
-                                        <input
-                                            type="number"
-                                            value={priceRange[1]}
-                                            onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                            className="w-20 px-2 py-1 border rounded"
-                                            placeholder="Max"
-                                        />
+                                    <Slider
+                                        value={priceRange}
+                                        onValueChange={setPriceRange}
+                                        max={2000}
+                                        min={0}
+                                        step={10}
+                                        className="mb-2"
+                                    />
+                                    <div className="flex justify-between text-sm text-gray-600">
+                                        <span>${priceRange[0]}</span>
+                                        <span>${priceRange[1]}</span>
                                     </div>
                                 </div>
                             </div>
@@ -214,29 +215,9 @@ export default function CategoryPage() {
                     </Card>
                 )}
 
-                {/* Lista de productos (simplificada) */}
+                {/* Lista/Grid de productos */}
                 {finalProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {finalProducts.map((product) => (
-                            <div key={product.id} className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold">{product.name}</h3>
-                                <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
-                                <div className="mt-2">
-                                    <span className="font-bold">${product.price}</span>
-                                    {product.comparePrice && (
-                                        <span className="ml-2 text-sm text-gray-500 line-through">
-                                            ${product.comparePrice}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="mt-2">
-                                    <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                                        {product.stock > 0 ? "Disponible" : "Agotado"}
-                                    </Badge>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <ProductGrid products={finalProducts} viewMode={viewMode} />
                 ) : (
                     <div className="text-center py-12">
                         <div className="text-gray-400 text-6xl mb-4">📦</div>
@@ -262,18 +243,14 @@ export default function CategoryPage() {
                 )}
 
                 {/* Categorías relacionadas */}
-                {categories.length > 1 && (
+                {getAllCategories.length > 1 && (
                     <div className="mt-12">
                         <h2 className="text-2xl font-bold mb-6">Otras Categorías</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            {categories.filter(cat =>
+                        <CategoryGrid
+                            categories={getAllCategories.filter(cat =>
                                 cat.id !== currentCategory.id && cat.isActive
-                            ).slice(0, 6).map((category) => (
-                                <div key={category.id} className="bg-white rounded-lg shadow-sm p-4 text-center">
-                                    <h3 className="font-semibold text-sm">{category.name}</h3>
-                                </div>
-                            ))}
-                        </div>
+                            ).slice(0, 6)}
+                        />
                     </div>
                 )}
             </main>
@@ -281,4 +258,11 @@ export default function CategoryPage() {
             <Footer />
         </div>
     )
+}
+
+// Placeholder para el hook `use` hasta que esté disponible en React
+function use<T>(promise: Promise<T>): T {
+    // Esta es una implementación temporal
+    // En el futuro, React proporcionará este hook oficialmente
+    throw promise
 }

@@ -10,9 +10,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { CustomModal } from '@/components/ui/custom-modal'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import Image from 'next/image'
 import { X } from 'lucide-react'
-import type { Banner, CreateBannerData } from '@/types'
+import type { Banner, CreateBannerData, BannerPosition } from '@/types'
 
 interface BannerFormProps {
     banner?: Banner
@@ -22,7 +23,7 @@ interface BannerFormProps {
 
 export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const [imagePreview, setImagePreview] = useState(banner?.imageUrl || '')
+    const [imagePreview, setImagePreview] = useState(banner?.image || '')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Optimizar selectores para evitar bucles infinitos
@@ -39,17 +40,19 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
     } = useForm<CreateBannerData>({
         defaultValues: {
             title: banner?.title || '',
-            subtitle: banner?.subtitle || '',
-            description: banner?.description || '',
-            imageUrl: banner?.imageUrl || '',
-            linkUrl: banner?.linkUrl || '',
-            buttonText: banner?.buttonText || '',
+            description: banner?.description || null,
+            image: banner?.image || '',
+            link: banner?.link || null,
             isActive: banner?.isActive ?? true,
-            order: banner?.order || 0
+            sortOrder: banner?.sortOrder || 0,
+            position: banner?.position || 'HERO',
+            startDate: banner?.startDate || null,
+            endDate: banner?.endDate || null,
+            categoryId: banner?.categoryId || null
         }
     })
 
-    const imageUrl = watch('imageUrl')
+    const imageUrl = watch('image')
 
     useEffect(() => {
         if (imageUrl) {
@@ -61,15 +64,17 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
         if (banner) {
             reset({
                 title: banner.title,
-                subtitle: banner.subtitle || '',
-                description: banner.description || '',
-                imageUrl: banner.imageUrl,
-                linkUrl: banner.linkUrl || '',
-                buttonText: banner.buttonText || '',
+                description: banner.description || null,
+                image: banner.image,
+                link: banner.link || null,
                 isActive: banner.isActive,
-                order: banner.order || 0
+                sortOrder: banner.sortOrder || 0,
+                position: banner.position,
+                startDate: banner.startDate || null,
+                endDate: banner.endDate || null,
+                categoryId: banner.categoryId || null
             })
-            setImagePreview(banner.imageUrl)
+            setImagePreview(banner.image)
         }
     }, [banner, reset])
 
@@ -77,10 +82,22 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
         try {
             setIsSubmitting(true)
 
+            // Convert undefined to null for description and other optional fields
+            const bannerData = {
+                ...data,
+                description: data.description ?? null,
+                link: data.link ?? null,
+                startDate: data.startDate ?? null,
+                endDate: data.endDate ?? null,
+                categoryId: data.categoryId ?? null,
+                isActive: data.isActive ?? true,
+                sortOrder: data.sortOrder ?? 0
+            }
+
             if (banner) {
-                updateBanner(banner.id, data)
+                updateBanner(banner.id, bannerData)
             } else {
-                addBanner(data)
+                addBanner(bannerData)
             }
 
             reset()
@@ -102,12 +119,12 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
 
     const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const url = e.target.value
-        setValue('imageUrl', url)
+        setValue('image', url)
         setImagePreview(url)
     }
 
     const removeImage = () => {
-        setValue('imageUrl', '')
+        setValue('image', '')
         setImagePreview('')
     }
 
@@ -124,6 +141,13 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
             url: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=400&fit=crop',
             title: 'Ropa y Moda'
         }
+    ]
+
+    const positionOptions: { value: BannerPosition; label: string }[] = [
+        { value: 'HERO', label: 'Banner Principal' },
+        { value: 'CATEGORY', label: 'Banner de Categoría' },
+        { value: 'SIDEBAR', label: 'Banner Lateral' },
+        { value: 'FOOTER', label: 'Banner de Pie de Página' }
     ]
 
     return (
@@ -178,29 +202,17 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                     {/* Formulario */}
                     <div className="space-y-6">
                         <form onSubmit={handleSubmit(onSubmit)} id="banner-form" className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="title">Título *</Label>
-                                    <Input
-                                        id="title"
-                                        {...register('title', { required: 'El título es requerido' })}
-                                        placeholder="Título del banner"
-                                        className="h-11"
-                                    />
-                                    {errors.title && (
-                                        <p className="text-sm text-red-500">{errors.title.message}</p>
-                                    )}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="subtitle">Subtítulo</Label>
-                                    <Input
-                                        id="subtitle"
-                                        {...register('subtitle')}
-                                        placeholder="Subtítulo opcional"
-                                        className="h-11"
-                                    />
-                                </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="title">Título *</Label>
+                                <Input
+                                    id="title"
+                                    {...register('title', { required: 'El título es requerido' })}
+                                    placeholder="Título del banner"
+                                    className="h-11"
+                                />
+                                {errors.title && (
+                                    <p className="text-sm text-red-500">{errors.title.message}</p>
+                                )}
                             </div>
 
                             <div className="space-y-2">
@@ -215,11 +227,11 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="imageUrl">URL de Imagen *</Label>
+                                <Label htmlFor="image">URL de Imagen *</Label>
                                 <div className="flex gap-2">
                                     <Input
-                                        id="imageUrl"
-                                        {...register('imageUrl', {
+                                        id="image"
+                                        {...register('image', {
                                             required: 'La imagen es requerida',
                                             onChange: handleImageUrlChange
                                         })}
@@ -238,8 +250,8 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                                         </Button>
                                     )}
                                 </div>
-                                {errors.imageUrl && (
-                                    <p className="text-sm text-red-500">{errors.imageUrl.message}</p>
+                                {errors.image && (
+                                    <p className="text-sm text-red-500">{errors.image.message}</p>
                                 )}
 
                                 {/* Imágenes predefinidas */}
@@ -251,7 +263,7 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                                                 key={index}
                                                 className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
                                                 onClick={() => {
-                                                    setValue('imageUrl', preset.url)
+                                                    setValue('image', preset.url)
                                                     setImagePreview(preset.url)
                                                 }}
                                             >
@@ -275,33 +287,42 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="linkUrl">URL de Enlace</Label>
+                                    <Label htmlFor="link">URL de Enlace</Label>
                                     <Input
-                                        id="linkUrl"
-                                        {...register('linkUrl')}
-                                        placeholder="https://ejemplo.com"
+                                        id="link"
+                                        {...register('link')}
+                                        placeholder="/categoria/ofertas"
                                         className="h-11"
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="buttonText">Texto del Botón</Label>
-                                    <Input
-                                        id="buttonText"
-                                        {...register('buttonText')}
-                                        placeholder="Ver más"
-                                        className="h-11"
-                                    />
+                                    <Label htmlFor="position">Posición</Label>
+                                    <Select
+                                        value={watch('position')}
+                                        onValueChange={(value: BannerPosition) => setValue('position', value)}
+                                    >
+                                        <SelectTrigger className="h-11">
+                                            <SelectValue placeholder="Selecciona una posición" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {positionOptions.map((option) => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="order">Orden</Label>
+                                    <Label htmlFor="sortOrder">Orden</Label>
                                     <Input
-                                        id="order"
+                                        id="sortOrder"
                                         type="number"
-                                        {...register('order', { valueAsNumber: true })}
+                                        {...register('sortOrder', { valueAsNumber: true })}
                                         placeholder="0"
                                         className="h-11"
                                     />
@@ -347,21 +368,15 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                                                     </h2>
                                                 )}
 
-                                                {watch('subtitle') && (
-                                                    <h3 className="text-xl mb-4 opacity-90">
-                                                        {watch('subtitle')}
-                                                    </h3>
-                                                )}
-
                                                 {watch('description') && (
                                                     <p className="text-sm mb-6 opacity-80 line-clamp-3">
                                                         {watch('description')}
                                                     </p>
                                                 )}
 
-                                                {watch('buttonText') && (
+                                                {watch('link') && (
                                                     <Button variant="secondary" size="lg">
-                                                        {watch('buttonText')}
+                                                        Ver más
                                                     </Button>
                                                 )}
                                             </div>
@@ -371,6 +386,13 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
                                         <div className="absolute top-4 right-4">
                                             <Badge variant={watch('isActive') ? 'default' : 'secondary'}>
                                                 {watch('isActive') ? 'Activo' : 'Inactivo'}
+                                            </Badge>
+                                        </div>
+
+                                        {/* Badge de posición */}
+                                        <div className="absolute bottom-4 left-4">
+                                            <Badge variant="outline" className="bg-white/90 text-black">
+                                                {positionOptions.find(p => p.value === watch('position'))?.label}
                                             </Badge>
                                         </div>
                                     </div>

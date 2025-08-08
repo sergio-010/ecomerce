@@ -20,7 +20,7 @@ interface ProductFormProps {
 
 export function ProductForm({ productId, onClose }: ProductFormProps) {
     const router = useRouter()
-    const { addProduct, updateProduct, products } = useProductStore()
+    const { createProduct, updateProduct, products } = useProductStore()
     const { categories } = useCategoryStore()
     const [isLoading, setIsLoading] = useState(false)
 
@@ -79,7 +79,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
             if (isEditing && productId) {
                 await updateProduct(productId, data)
             } else {
-                await addProduct(data)
+                await createProduct(data)
             }
 
             if (onClose) {

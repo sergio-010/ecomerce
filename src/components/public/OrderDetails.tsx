@@ -49,14 +49,14 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
     }, [orderId, orders]);
 
     const handleCancelOrder = () => {
-        if (order && (order.status === "pending" || order.status === "confirmed")) {
+        if (order && (order.status === "PENDING" || order.status === "CONFIRMED")) {
             toast.error("¿Cancelar esta orden?", {
                 description: "Esta acción no se puede deshacer",
                 action: {
                     label: "Cancelar orden",
                     onClick: () => {
                         cancelOrder(order.id);
-                        setOrder({ ...order, status: "cancelled" });
+                        setOrder({ ...order, status: "CANCELLED" });
                     }
                 }
             })
@@ -72,7 +72,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
         );
     }
 
-    const canCancel = order.status === "pending" || order.status === "confirmed";
+    const canCancel = order.status === "PENDING" || order.status === "CONFIRMED";
     const orderDate = new Date(order.createdAt).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
@@ -98,7 +98,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                                 {statusLabels[order.status as keyof typeof statusLabels]}
                             </Badge>
                             <div className="mt-2 text-2xl font-bold">
-                                {formatPrice(order.totalAmount)}
+                                {formatPrice(order.total)}
                             </div>
                         </div>
                     </div>
@@ -114,18 +114,15 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
                             <h4 className="font-semibold mb-2">Cliente</h4>
-                            <p>{order.userName}</p>
-                            <p className="text-gray-600">{order.userEmail}</p>
-                            {order.phone && <p className="text-gray-600">{order.phone}</p>}
+                            <p>Usuario {order.userId}</p>
+                            <p className="text-gray-600">ID: {order.userId}</p>
                         </div>
                         <div>
                             <h4 className="font-semibold mb-2">Dirección de envío</h4>
                             {order.shippingAddress ? (
                                 <div className="text-gray-600">
-                                    <p>{order.shippingAddress.street}</p>
-                                    <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
-                                    <p>{order.shippingAddress.zipCode}</p>
-                                    <p>{order.shippingAddress.country}</p>
+                                    <p>Dirección de envío</p>
+                                    <p className="text-gray-600">Información no disponible</p>
                                 </div>
                             ) : (
                                 <p className="text-gray-500">No especificada</p>
@@ -146,39 +143,19 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                 <CardHeader>
                     <CardTitle>Productos ordenados</CardTitle>
                     <CardDescription>
-                        {order.items.length} {order.items.length === 1 ? 'producto' : 'productos'}
+                        0 productos
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {order.items.map((item, index: number) => (
-                            <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                                <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden">
-                                    <Image
-                                        src={item.productImage || "/placeholder.svg"}
-                                        alt={item.productName}
-                                        fill
-                                        className="object-cover"
-                                        sizes="64px"
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-semibold">{item.productName}</h4>
-                                    <p className="text-gray-600">Cantidad: {item.quantity}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold">{formatPrice(item.price * item.quantity)}</p>
-                                    <p className="text-sm text-gray-600">{formatPrice(item.price)} c/u</p>
-                                </div>
-                            </div>
-                        ))}
+                        <p className="text-gray-600">Los items no están disponibles</p>
                     </div>
 
                     {/* Total */}
                     <div className="border-t pt-4 mt-6">
                         <div className="flex justify-between items-center text-lg font-bold">
                             <span>Total:</span>
-                            <span>{formatPrice(order.totalAmount)}</span>
+                            <span>{formatPrice(order.total)}</span>
                         </div>
                     </div>
                 </CardContent>

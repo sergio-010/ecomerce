@@ -12,19 +12,23 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 const statusColors = {
-    pending: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
+    PENDING: "bg-yellow-100 text-yellow-800",
+    CONFIRMED: "bg-blue-100 text-blue-800",
+    PROCESSING: "bg-orange-100 text-orange-800",
+    SHIPPED: "bg-purple-100 text-purple-800",
+    DELIVERED: "bg-green-100 text-green-800",
+    CANCELLED: "bg-red-100 text-red-800",
+    REFUNDED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels = {
-    pending: "Pendiente",
-    confirmed: "Confirmado",
-    shipped: "Enviado",
-    delivered: "Entregado",
-    cancelled: "Cancelado",
+    PENDING: "Pendiente",
+    CONFIRMED: "Confirmado",
+    PROCESSING: "Procesando",
+    SHIPPED: "Enviado",
+    DELIVERED: "Entregado",
+    CANCELLED: "Cancelado",
+    REFUNDED: "Reembolsado",
 };
 
 export function UserOrdersList() {
@@ -77,7 +81,7 @@ export function UserOrdersList() {
                                 <div>
                                     <CardTitle className="text-lg">Orden #{order.id}</CardTitle>
                                     <CardDescription>
-                                        {new Date(order.createdAt).toLocaleDateString()} • {order.items.length} producto{order.items.length !== 1 ? "s" : ""}
+                                        {new Date(order.createdAt).toLocaleDateString()} • Orden
                                     </CardDescription>
                                 </div>
                                 <Badge className={statusColors[order.status]}>
@@ -87,36 +91,30 @@ export function UserOrdersList() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {/* Productos de la orden (mostrar máximo 3) */}
+                                {/* Información de la orden */}
                                 <div className="space-y-2">
-                                    {order.items.slice(0, 3).map((item) => (
-                                        <div key={item.productId} className="flex items-center space-x-3">
-                                            <Image
-                                                src={item.productImage}
-                                                alt={item.productName}
-                                                width={40}
-                                                height={40}
-                                                className="object-cover rounded"
-                                            />
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium">{item.productName}</p>
-                                                <p className="text-xs text-gray-600">
-                                                    Cantidad: {item.quantity} • ${item.price.toFixed(2)} c/u
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {order.items.length > 3 && (
-                                        <p className="text-xs text-gray-500">
-                                            +{order.items.length - 3} producto{order.items.length - 3 !== 1 ? "s" : ""} más
-                                        </p>
-                                    )}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Número de orden:</span>
+                                        <span className="text-sm font-medium">{order.orderNumber}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Subtotal:</span>
+                                        <span className="text-sm">${order.subtotal.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Envío:</span>
+                                        <span className="text-sm">${order.shipping.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">Impuestos:</span>
+                                        <span className="text-sm">${order.tax.toFixed(2)}</span>
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-between items-center pt-4 border-t">
                                     <div>
                                         <p className="text-lg font-semibold">
-                                            Total: ${order.totalAmount.toFixed(2)}
+                                            Total: ${order.total.toFixed(2)}
                                         </p>
                                     </div>
                                     <Link href={`/orders/${order.id}`}>

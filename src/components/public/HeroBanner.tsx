@@ -42,15 +42,15 @@ export function HeroBanner() {
             <div
                 className="w-full h-full flex items-center justify-center text-center relative"
                 style={{
-                    backgroundColor: currentBanner.backgroundColor || '#f8f9fa',
-                    color: currentBanner.textColor || '#000000'
+                    backgroundColor: '#f8f9fa',
+                    color: '#000000'
                 }}
             >
                 {/* Background Image */}
-                {currentBanner.imageUrl && (
+                {currentBanner.image && (
                     <div className="absolute inset-0">
                         <Image
-                            src={currentBanner.imageUrl}
+                            src={currentBanner.image}
                             alt={currentBanner.title}
                             fill
                             className="object-cover"
@@ -68,18 +68,18 @@ export function HeroBanner() {
                         {currentBanner.title}
                     </h1>
 
-                    {currentBanner.subtitle && (
+                    {currentBanner.description && (
                         <p className="text-base md:text-lg mb-6 opacity-80">
-                            {currentBanner.subtitle}
+                            {currentBanner.description}
                         </p>
                     )}
 
-                    {currentBanner.linkUrl && (
-                        <Link href={currentBanner.linkUrl}>
+                    {currentBanner.link && (
+                        <Link href={currentBanner.link}>
                             <Button
                                 className="bg-black text-white hover:bg-gray-800 px-6 py-2"
                             >
-                                {currentBanner.buttonText || "Ver Productos"}
+                                Ver Productos
                             </Button>
                         </Link>
                     )}

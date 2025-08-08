@@ -9,7 +9,9 @@ interface CategoryStore {
   error: string | null;
 
   // Actions
-  addCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => void;
+  addCategory: (
+    category: Omit<Category, "id" | "createdAt" | "updatedAt">
+  ) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   toggleCategoryStatus: (id: string) => void;
@@ -28,7 +30,8 @@ const mockCategories: Category[] = [
     name: "Electrónicos",
     slug: "electronicos",
     description: "Dispositivos electrónicos y tecnología",
-    image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=300&fit=crop&q=80",
     isActive: true,
     sortOrder: 1,
     createdAt: new Date(),
@@ -39,7 +42,8 @@ const mockCategories: Category[] = [
     name: "Ropa y Moda",
     slug: "ropa-moda",
     description: "Prendas de vestir y accesorios de moda",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop&q=80",
     isActive: true,
     sortOrder: 2,
     createdAt: new Date(),
@@ -50,7 +54,8 @@ const mockCategories: Category[] = [
     name: "Hogar y Jardín",
     slug: "hogar-jardin",
     description: "Artículos para el hogar y jardinería",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop&q=80",
     isActive: true,
     sortOrder: 3,
     createdAt: new Date(),
@@ -61,7 +66,8 @@ const mockCategories: Category[] = [
     name: "Deportes",
     slug: "deportes",
     description: "Equipamiento deportivo y fitness",
-    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=300&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&h=300&fit=crop&q=80",
     isActive: true,
     sortOrder: 4,
     createdAt: new Date(),
@@ -72,7 +78,8 @@ const mockCategories: Category[] = [
     name: "Libros",
     slug: "libros",
     description: "Libros físicos y digitales",
-    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop&q=80",
     isActive: false,
     sortOrder: 5,
     createdAt: new Date(),
@@ -98,7 +105,9 @@ export const useCategoryStore = create<CategoryStore>()(
           };
 
           set((state) => ({
-            categories: [...state.categories, newCategory].sort((a, b) => a.sortOrder - b.sortOrder),
+            categories: [...state.categories, newCategory].sort(
+              (a, b) => a.sortOrder - b.sortOrder
+            ),
           }));
 
           toast.success(`Categoría creada`, {
@@ -130,7 +139,9 @@ export const useCategoryStore = create<CategoryStore>()(
           const category = get().categories.find((c) => c.id === id);
 
           set((state) => ({
-            categories: state.categories.filter((category) => category.id !== id),
+            categories: state.categories.filter(
+              (category) => category.id !== id
+            ),
           }));
 
           if (category) {
@@ -146,7 +157,11 @@ export const useCategoryStore = create<CategoryStore>()(
           set((state) => ({
             categories: state.categories.map((category) =>
               category.id === id
-                ? { ...category, isActive: !category.isActive, updatedAt: new Date() }
+                ? {
+                    ...category,
+                    isActive: !category.isActive,
+                    updatedAt: new Date(),
+                  }
                 : category
             ),
           }));

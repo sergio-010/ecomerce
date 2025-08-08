@@ -21,8 +21,8 @@ export function Navbar() {
     const favoritesCount = useMemo(() => favorites.length, [favorites])
     const parentCategories = useMemo(() => {
         return categories
-            .filter((category) => !category.parentId && category.isActive)
-            .sort((a, b) => a.order - b.order)
+            .filter((category) => category.isActive)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
             .slice(0, 6)
     }, [categories])
 

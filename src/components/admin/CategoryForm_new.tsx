@@ -154,7 +154,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
                                 <Label htmlFor="name">Nombre *</Label>
                                 <Input
                                     id="name"
-                                    {...register('name', { 
+                                    {...register('name', {
                                         required: 'El nombre es requerido',
                                         onChange: handleNameChange
                                     })}
@@ -251,7 +251,7 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-2">
                                         <h3 className="font-semibold text-lg">
@@ -261,17 +261,17 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
                                             {watch('isActive') ? 'Activa' : 'Inactiva'}
                                         </Badge>
                                     </div>
-                                    
+
                                     {watch('description') && (
                                         <p className="text-sm text-muted-foreground mb-2">
                                             {watch('description')}
                                         </p>
                                     )}
-                                    
+
                                     <div className="text-xs text-muted-foreground">
                                         <span className="font-medium">Slug:</span> {watch('slug') || 'sin-slug'}
                                     </div>
-                                    
+
                                     <div className="text-xs text-muted-foreground">
                                         <span className="font-medium">Orden:</span> {watch('sortOrder') || 0}
                                     </div>

@@ -9,19 +9,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const statusColors = {
-    pending: "bg-yellow-100 text-yellow-800",
-    confirmed: "bg-blue-100 text-blue-800",
-    shipped: "bg-purple-100 text-purple-800",
-    delivered: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
+    PENDING: "bg-yellow-100 text-yellow-800",
+    CONFIRMED: "bg-blue-100 text-blue-800",
+    PROCESSING: "bg-orange-100 text-orange-800",
+    SHIPPED: "bg-purple-100 text-purple-800",
+    DELIVERED: "bg-green-100 text-green-800",
+    CANCELLED: "bg-red-100 text-red-800",
+    REFUNDED: "bg-gray-100 text-gray-800",
 };
 
 const statusLabels = {
-    pending: "Pendiente",
-    confirmed: "Confirmado",
-    shipped: "Enviado",
-    delivered: "Entregado",
-    cancelled: "Cancelado",
+    PENDING: "Pendiente",
+    CONFIRMED: "Confirmado",
+    PROCESSING: "Procesando",
+    SHIPPED: "Enviado",
+    DELIVERED: "Entregado",
+    CANCELLED: "Cancelado",
+    REFUNDED: "Reembolsado",
 };
 
 interface OrderManagementProps {
@@ -47,7 +51,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
         updateOrderStatus(orderId, newStatus);
         setOrders(prev => prev.map(order =>
             order.id === orderId
-                ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+                ? { ...order, status: newStatus, updatedAt: new Date() }
                 : order
         ));
     };
@@ -64,11 +68,11 @@ export function OrderManagement({ className }: OrderManagementProps) {
 
         return {
             total: orders.length,
-            pending: stats.pending || 0,
-            confirmed: stats.confirmed || 0,
-            shipped: stats.shipped || 0,
-            delivered: stats.delivered || 0,
-            cancelled: stats.cancelled || 0,
+            PENDING: stats.PENDING || 0,
+            CONFIRMED: stats.CONFIRMED || 0,
+            SHIPPED: stats.SHIPPED || 0,
+            DELIVERED: stats.DELIVERED || 0,
+            CANCELLED: stats.CANCELLED || 0,
         };
     };
 
@@ -94,7 +98,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                            <p className="text-2xl font-bold text-yellow-600">{stats.PENDING}</p>
                             <p className="text-sm text-gray-600">Pendientes</p>
                         </div>
                     </CardContent>
@@ -102,7 +106,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-blue-600">{stats.confirmed}</p>
+                            <p className="text-2xl font-bold text-blue-600">{stats.CONFIRMED}</p>
                             <p className="text-sm text-gray-600">Confirmadas</p>
                         </div>
                     </CardContent>
@@ -110,7 +114,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-purple-600">{stats.shipped}</p>
+                            <p className="text-2xl font-bold text-purple-600">{stats.SHIPPED}</p>
                             <p className="text-sm text-gray-600">Enviadas</p>
                         </div>
                     </CardContent>
@@ -118,7 +122,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
+                            <p className="text-2xl font-bold text-green-600">{stats.DELIVERED}</p>
                             <p className="text-sm text-gray-600">Entregadas</p>
                         </div>
                     </CardContent>
@@ -126,7 +130,7 @@ export function OrderManagement({ className }: OrderManagementProps) {
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
-                            <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+                            <p className="text-2xl font-bold text-red-600">{stats.CANCELLED}</p>
                             <p className="text-sm text-gray-600">Canceladas</p>
                         </div>
                     </CardContent>
@@ -190,15 +194,15 @@ export function OrderManagement({ className }: OrderManagementProps) {
                                         </TableCell>
                                         <TableCell>
                                             <div>
-                                                <p className="font-medium">{order.userName}</p>
-                                                <p className="text-sm text-gray-600">{order.userEmail}</p>
+                                                <p className="font-medium">Usuario {order.userId}</p>
+                                                <p className="text-sm text-gray-600">ID: {order.userId}</p>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             {new Date(order.createdAt).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>
-                                            ${order.totalAmount.toFixed(2)}
+                                            ${order.total.toFixed(2)}
                                         </TableCell>
                                         <TableCell>
                                             <Badge className={statusColors[order.status]}>

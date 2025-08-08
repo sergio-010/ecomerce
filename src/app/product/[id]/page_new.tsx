@@ -25,7 +25,7 @@ export default function ProductPage() {
     useEffect(() => {
         // Buscar el producto en el store
         const foundProduct = products.find(p => p.id === productId)
-        
+
         if (foundProduct) {
             // Convertir el producto del store a ProductWithRelations
             const productWithRelations: ProductWithRelations = {
@@ -135,7 +135,7 @@ export default function ProductPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Navbar />
-            
+
             <main className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Galería de imágenes */}
@@ -156,18 +156,17 @@ export default function ProductPage() {
                                 </div>
                             )}
                         </div>
-                        
+
                         {product.images && product.images.length > 1 && (
                             <div className="flex gap-2 overflow-x-auto">
                                 {product.images.map((image, index) => (
                                     <button
                                         key={image.id}
                                         onClick={() => setSelectedImageIndex(index)}
-                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                                            index === selectedImageIndex
+                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${index === selectedImageIndex
                                                 ? "border-blue-500"
                                                 : "border-gray-200"
-                                        }`}
+                                            }`}
                                     >
                                         <Image
                                             src={image.url}
@@ -196,21 +195,20 @@ export default function ProductPage() {
                                     <Badge variant="destructive">Oferta</Badge>
                                 )}
                             </div>
-                            
+
                             <h1 className="text-3xl font-bold text-gray-900 mb-4">
                                 {product.name}
                             </h1>
-                            
+
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="flex items-center gap-1">
                                     {[...Array(5)].map((_, i) => (
                                         <Star
                                             key={i}
-                                            className={`w-5 h-5 ${
-                                                i < 4
+                                            className={`w-5 h-5 ${i < 4
                                                     ? "text-yellow-400 fill-current"
                                                     : "text-gray-300"
-                                            }`}
+                                                }`}
                                         />
                                     ))}
                                 </div>
@@ -229,7 +227,7 @@ export default function ProductPage() {
                                     </span>
                                 )}
                             </div>
-                            
+
                             {hasPromotion && product.comparePrice && (
                                 <div className="text-green-600 font-medium">
                                     Ahorras ${(product.comparePrice - product.price).toFixed(2)}

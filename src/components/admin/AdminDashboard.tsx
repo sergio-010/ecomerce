@@ -35,14 +35,14 @@ export function AdminDashboard() {
         }
 
         const testOrders = [];
-        const statuses: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+        const statuses: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
 
         for (let i = 0; i < 5; i++) {
             const randomProducts = products.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1);
             const orderItems = randomProducts.map(product => ({
                 productId: product.id,
                 productName: product.name,
-                productImage: product.image,
+                productImage: "/placeholder.svg", // No hay image en el nuevo schema
                 price: product.price,
                 quantity: Math.floor(Math.random() * 3) + 1,
             }));
@@ -52,23 +52,40 @@ export function AdminDashboard() {
 
             const testOrder: Order = {
                 id: `test_order_${Date.now()}_${i}`,
+                orderNumber: `ORD-${Date.now()}-${i}`,
                 userId: `test_user_${i}`,
-                userEmail: `usuario${i}@test.com`,
-                userName: `Usuario Test ${i + 1}`,
-                items: orderItems,
-                totalAmount,
+                subtotal: totalAmount - 20,
+                tax: 10,
+                shipping: 10,
+                discount: 0,
+                total: totalAmount,
+                currency: "USD",
+                paymentStatus: "PENDING",
+                paymentMethod: null,
+                paymentId: null,
+                shippingMethod: null,
+                trackingNumber: null,
+                estimatedDelivery: null,
+                deliveredAt: null,
                 status: randomStatus,
-                createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-                updatedAt: new Date().toISOString(),
-                shippingAddress: {
+                createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+                updatedAt: new Date(),
+                shippingAddress: JSON.stringify({
                     street: `Calle Test ${i + 1}`,
                     city: "Ciudad Test",
                     state: "Estado Test",
                     zipCode: `1000${i}`,
                     country: "País Test",
-                },
-                phone: `+1234567890${i}`,
-                notes: `Orden de prueba número ${i + 1}`,
+                }),
+                billingAddress: JSON.stringify({
+                    street: `Calle Test ${i + 1}`,
+                    city: "Ciudad Test",
+                    state: "Estado Test",
+                    zipCode: `1000${i}`,
+                    country: "País Test",
+                }),
+                notes: `Notas del cliente ${i + 1}`,
+                adminNotes: `Orden de prueba número ${i + 1}`,
             };
 
             testOrders.push(testOrder);
@@ -83,17 +100,17 @@ export function AdminDashboard() {
     // Estadísticas de órdenes
     const orderStats = {
         total: orders.length,
-        pending: orders.filter(o => o.status === "pending").length,
-        confirmed: orders.filter(o => o.status === "confirmed").length,
-        shipped: orders.filter(o => o.status === "shipped").length,
-        delivered: orders.filter(o => o.status === "delivered").length,
-        cancelled: orders.filter(o => o.status === "cancelled").length,
+        PENDING: orders.filter(o => o.status === "PENDING").length,
+        CONFIRMED: orders.filter(o => o.status === "CONFIRMED").length,
+        SHIPPED: orders.filter(o => o.status === "SHIPPED").length,
+        DELIVERED: orders.filter(o => o.status === "DELIVERED").length,
+        CANCELLED: orders.filter(o => o.status === "CANCELLED").length,
     };
 
     // Estadísticas de ventas
     const totalRevenue = orders
-        .filter(o => o.status !== "cancelled")
-        .reduce((sum, order) => sum + order.totalAmount, 0);
+        .filter(o => o.status !== "CANCELLED")
+        .reduce((sum, order) => sum + order.total, 0);
 
     const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
@@ -103,22 +120,26 @@ export function AdminDashboard() {
         .slice(0, 5);
 
     // Productos con bajo stock
-    const lowStockProducts = products.filter(p => p.quantity < 10);
+    const lowStockProducts = products.filter(p => p.stock < 10);
 
     const statusColors = {
-        pending: "bg-yellow-100 text-yellow-800",
-        confirmed: "bg-blue-100 text-blue-800",
-        shipped: "bg-purple-100 text-purple-800",
-        delivered: "bg-green-100 text-green-800",
-        cancelled: "bg-red-100 text-red-800",
+        PENDING: "bg-yellow-100 text-yellow-800",
+        CONFIRMED: "bg-blue-100 text-blue-800",
+        PROCESSING: "bg-orange-100 text-orange-800",
+        SHIPPED: "bg-purple-100 text-purple-800",
+        DELIVERED: "bg-green-100 text-green-800",
+        CANCELLED: "bg-red-100 text-red-800",
+        REFUNDED: "bg-gray-100 text-gray-800",
     };
 
     const statusLabels = {
-        pending: "Pendiente",
-        confirmed: "Confirmado",
-        shipped: "Enviado",
-        delivered: "Entregado",
-        cancelled: "Cancelado",
+        PENDING: "Pendiente",
+        CONFIRMED: "Confirmado",
+        PROCESSING: "Procesando",
+        SHIPPED: "Enviado",
+        DELIVERED: "Entregado",
+        CANCELLED: "Cancelado",
+        REFUNDED: "Reembolsado",
     };
 
     return (
@@ -146,7 +167,7 @@ export function AdminDashboard() {
                     <CardContent>
                         <div className="text-2xl font-bold">{orderStats.total}</div>
                         <p className="text-xs text-muted-foreground">
-                            {orderStats.pending} pendientes
+                            {orderStats.PENDING} pendientes
                         </p>
                     </CardContent>
                 </Card>
@@ -183,7 +204,7 @@ export function AdminDashboard() {
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{categories.filter(cat => !cat.parentId).length}</div>
+                        <div className="text-2xl font-bold">{categories.length}</div>
                         <p className="text-xs text-muted-foreground">
                             Categorías activas
                         </p>
@@ -203,31 +224,31 @@ export function AdminDashboard() {
                             <div className="flex justify-between items-center">
                                 <span className="text-sm">Pendientes</span>
                                 <Badge className="bg-yellow-100 text-yellow-800">
-                                    {orderStats.pending}
+                                    {orderStats.PENDING}
                                 </Badge>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm">Confirmadas</span>
                                 <Badge className="bg-blue-100 text-blue-800">
-                                    {orderStats.confirmed}
+                                    {orderStats.CONFIRMED}
                                 </Badge>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm">Enviadas</span>
                                 <Badge className="bg-purple-100 text-purple-800">
-                                    {orderStats.shipped}
+                                    {orderStats.SHIPPED}
                                 </Badge>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm">Entregadas</span>
                                 <Badge className="bg-green-100 text-green-800">
-                                    {orderStats.delivered}
+                                    {orderStats.DELIVERED}
                                 </Badge>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-sm">Canceladas</span>
                                 <Badge className="bg-red-100 text-red-800">
-                                    {orderStats.cancelled}
+                                    {orderStats.CANCELLED}
                                 </Badge>
                             </div>
                         </div>
@@ -251,10 +272,10 @@ export function AdminDashboard() {
                                     <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                         <div>
                                             <p className="text-sm font-medium">#{order.id.slice(-8)}</p>
-                                            <p className="text-xs text-gray-600">{order.userName}</p>
+                                            <p className="text-xs text-gray-600">Usuario {order.userId}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-sm font-semibold">${order.totalAmount.toFixed(2)}</p>
+                                            <p className="text-sm font-semibold">${order.total.toFixed(2)}</p>
                                             <Badge className={statusColors[order.status]} style={{ fontSize: '10px' }}>
                                                 {statusLabels[order.status]}
                                             </Badge>
@@ -284,7 +305,7 @@ export function AdminDashboard() {
                             {lowStockProducts.slice(0, 6).map((product) => (
                                 <div key={product.id} className="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
                                     <Image
-                                        src={product.image}
+                                        src="/placeholder.svg"
                                         alt={product.name}
                                         width={48}
                                         height={48}
@@ -293,7 +314,7 @@ export function AdminDashboard() {
                                     <div className="flex-1">
                                         <p className="font-medium text-sm">{product.name}</p>
                                         <p className="text-xs text-orange-600">
-                                            Stock: {product.quantity} unidades
+                                            Stock: {product.stock} unidades
                                         </p>
                                     </div>
                                 </div>

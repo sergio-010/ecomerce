@@ -13,7 +13,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 export function CategoryGrid() {
     // Optimizar selectores para evitar bucles infinitos - usar useMemo para cálculos
     const allCategories = useCategoryStore((state) => state.categories)
-    const categories = useMemo(() => allCategories.filter(cat => !cat.parentId), [allCategories])
+    const categories = useMemo(() => allCategories, [allCategories])
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: 'start',
@@ -78,9 +78,9 @@ export function CategoryGrid() {
             <Card className="h-full transition-all duration-200 hover:scale-[1.02] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-none">
                 <CardContent className="p-0">
                     <div className="aspect-square relative overflow-hidden">
-                        {category.imageUrl ? (
+                        {category.image ? (
                             <Image
-                                src={category.imageUrl}
+                                src={category.image}
                                 alt={category.name}
                                 fill
                                 className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -106,11 +106,9 @@ export function CategoryGrid() {
                             </p>
                         )}
 
-                        {category.productCount !== undefined && (
-                            <p className="text-xs text-gray-500">
-                                {category.productCount} productos
-                            </p>
-                        )}
+                        <p className="text-xs text-gray-500">
+                            Productos disponibles
+                        </p>
                     </div>
                 </CardContent>
             </Card>

@@ -139,11 +139,11 @@ export const useCartStore = create<CartState>((set, get) => ({
     // Validar si hay suficiente stock para la cantidad solicitada
     validateStock: (product, requestedQuantity) => {
         // Verificar si el stock del producto es suficiente
-        return requestedQuantity <= (product.quantity || 0);
+        return requestedQuantity <= (product.stock || 0);
     },
 
     // Obtener stock disponible del producto
     checkAvailableStock: (product) => {
-        return product.quantity || 0;
+        return product.stock || 0;
     },
 }));

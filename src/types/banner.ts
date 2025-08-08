@@ -1,32 +1,30 @@
+export type BannerPosition = "HERO" | "CATEGORY" | "SIDEBAR" | "FOOTER";
+
 export interface Banner {
   id: string;
   title: string;
-  subtitle?: string;
-  description?: string;
-  imageUrl: string;
-  linkUrl?: string;
-  buttonText?: string;
+  description?: string | null;
+  image: string;
+  link?: string | null;
   isActive: boolean;
-  order: number;
-  startDate?: Date;
-  endDate?: Date;
-  backgroundColor?: string;
-  textColor?: string;
+  sortOrder: number;
+  position: BannerPosition;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  categoryId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CreateBannerData {
   title: string;
-  subtitle?: string;
-  description?: string;
-  imageUrl: string;
-  linkUrl?: string;
-  buttonText?: string;
+  description?: string | null;
+  image: string;
+  link?: string | null;
   isActive?: boolean;
-  order?: number;
-  startDate?: Date;
-  endDate?: Date;
-  backgroundColor?: string;
-  textColor?: string;
+  sortOrder?: number;
+  position: BannerPosition;
+  startDate?: Date | null;
+  endDate?: Date | null;
+  categoryId?: string | null;
 }

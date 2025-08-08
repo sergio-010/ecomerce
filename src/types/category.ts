@@ -2,14 +2,10 @@ export interface Category {
   id: string;
   name: string;
   slug: string;
-  description?: string;
-  imageUrl?: string;
+  description?: string | null;
+  image?: string | null;
   isActive: boolean;
-  order: number;
-  parentId?: string;
-  parent?: Category;
-  children?: Category[];
-  productCount?: number;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,9 +13,8 @@ export interface Category {
 export interface CreateCategoryData {
   name: string;
   slug?: string;
-  description?: string;
-  imageUrl?: string;
+  description?: string | null;
+  image?: string | null;
   isActive?: boolean;
-  order?: number;
-  parentId?: string;
+  sortOrder?: number;
 }

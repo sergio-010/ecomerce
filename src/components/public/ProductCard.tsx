@@ -18,8 +18,8 @@ export function ProductCard({ product }: ProductCardProps) {
     const removeFromFavorites = useFavoritesStore((state) => state.removeFromFavorites)
     const isFavorite = useFavoritesStore((state) => state.isFavorite)
     const isProductFavorite = isFavorite(product.id)
-    const hasDiscount = product.originalPrice && product.originalPrice > product.price
-    const discountPercentage = hasDiscount ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100) : 0
+    const hasDiscount = product.comparePrice && product.comparePrice > product.price
+    const discountPercentage = hasDiscount ? Math.round(((product.comparePrice! - product.price) / product.comparePrice!) * 100) : 0
 
     const handleViewProduct = () => {
         router.push(`/product/${product.id}`)
@@ -46,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
         >
             <div className="relative overflow-hidden aspect-square">
                 <Image
-                    src={product.image || "/placeholder.svg"}
+                    src="/placeholder.svg"
                     alt={product.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -99,17 +99,17 @@ export function ProductCard({ product }: ProductCardProps) {
                         </span>
                         {hasDiscount && (
                             <span className="text-sm text-gray-400 line-through">
-                                {formatPrice(product.originalPrice!)}
+                                {formatPrice(product.comparePrice!)}
                             </span>
                         )}
                     </div>
 
                     <Button
                         onClick={handleAddToCart}
-                        disabled={!product.inStock || product.quantity === 0}
+                        disabled={!product.isActive || product.stock === 0}
                         className="w-full bg-gray-900 hover:bg-gray-800 text-white h-9 font-normal text-sm"
                     >
-                        {!product.inStock || product.quantity === 0 ? "Agotado" : "Agregar al carrito"}
+                        {!product.isActive || product.stock === 0 ? "Agotado" : "Agregar al carrito"}
                     </Button>
                 </div>
             </div>

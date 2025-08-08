@@ -60,7 +60,6 @@ export default function BannersPage() {
                                             <TableHead>Título</TableHead>
                                             <TableHead>Estado</TableHead>
                                             <TableHead>Orden</TableHead>
-                                            <TableHead>Posición</TableHead>
                                             <TableHead>Enlace</TableHead>
                                             <TableHead>Fecha de creación</TableHead>
                                             <TableHead className="text-right">Acciones</TableHead>
@@ -87,11 +86,6 @@ export default function BannersPage() {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>{banner.sortOrder}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">
-                                                            {banner.position}
-                                                        </Badge>
-                                                    </TableCell>
                                                     <TableCell>
                                                         {banner.link ? (
                                                             <span className="text-blue-600">{banner.link}</span>
