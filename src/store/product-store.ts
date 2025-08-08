@@ -1,7 +1,5 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type { Product, CreateProductData } from "@/types";
-import { useCategoryStore } from "./category-store";
 
 interface ProductState {
   products: Product[];
@@ -29,8 +27,8 @@ const mockProducts: Product[] = [
   {
     id: "1",
     name: "iPhone 15 Pro",
-    price: 899.99,
-    originalPrice: 999.99,
+    price: 3699900,
+    originalPrice: 4099900,
     image:
       "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=400&h=400&fit=crop&q=80",
     description: "El último iPhone con chip A17 Pro y cámara avanzada",
@@ -50,7 +48,7 @@ const mockProducts: Product[] = [
   {
     id: "2",
     name: "MacBook Air M2",
-    price: 1199.99,
+    price: 4799900,
     image:
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&q=80",
     description: "Laptop ultradelgada con chip M2 y pantalla Retina",
@@ -67,8 +65,8 @@ const mockProducts: Product[] = [
   {
     id: "3",
     name: "Camiseta Premium",
-    price: 29.99,
-    originalPrice: 39.99,
+    price: 89900,
+    originalPrice: 119900,
     image:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&q=80",
     description: "Camiseta de algodón orgánico con diseño moderno",
@@ -87,135 +85,111 @@ const mockProducts: Product[] = [
   },
 ];
 
-export const useProductStore = create<ProductState>()(
-  persist(
-    (set, get) => ({
-      products: mockProducts,
-      isLoading: false,
-      error: null,
+export const useProductStore = create<ProductState>()((set, get) => ({
+  products: mockProducts,
+  isLoading: false,
+  error: null,
 
-      addProduct: (data: CreateProductData) => {
-        // Get the category name from the category store
-        const { getCategoryById } = useCategoryStore.getState();
-        const category = getCategoryById(data.categoryId);
+  addProduct: (data: CreateProductData) => {
+    const newProduct: Product = {
+      id: Date.now().toString(),
+      name: data.name,
+      price: data.price,
+      originalPrice: data.originalPrice,
+      image: data.image,
+      description: data.description,
+      category: "", // Will be populated by components when needed
+      categoryId: data.categoryId,
+      inStock: data.inStock ?? true,
+      quantity: data.quantity,
+      freeShipping: data.freeShipping ?? false,
+      hasPromotion: data.hasPromotion ?? false,
+      promotionPercentage: data.promotionPercentage,
+      promotionStartDate: data.promotionStartDate,
+      promotionEndDate: data.promotionEndDate,
+      createdAt: new Date(),
+    };
 
-        const newProduct: Product = {
-          id: Date.now().toString(),
-          name: data.name,
-          price: data.price,
-          originalPrice: data.originalPrice,
-          image: data.image,
-          description: data.description,
-          category: category?.name || "", // Populate category name
-          categoryId: data.categoryId,
-          inStock: data.inStock ?? true,
-          quantity: data.quantity,
-          freeShipping: data.freeShipping ?? false,
-          hasPromotion: data.hasPromotion ?? false,
-          promotionPercentage: data.promotionPercentage,
-          promotionStartDate: data.promotionStartDate,
-          promotionEndDate: data.promotionEndDate,
-          createdAt: new Date(),
-        };
+    set((state) => ({
+      products: [...state.products, newProduct],
+    }));
+  },
 
-        set((state) => ({
-          products: [...state.products, newProduct],
-        }));
-      },
+  updateProduct: (id: string, data: Partial<Product>) => {
+    set((state) => ({
+      products: state.products.map((product) =>
+        product.id === id ? { ...product, ...data } : product
+      ),
+    }));
+  },
 
-      updateProduct: (id: string, data: Partial<Product>) => {
-        // If categoryId is being updated, also update the category name
-        if (data.categoryId) {
-          const { getCategoryById } = useCategoryStore.getState();
-          const category = getCategoryById(data.categoryId);
-          data.category = category?.name || "";
-        }
+  deleteProduct: (id: string) => {
+    set((state) => ({
+      products: state.products.filter((product) => product.id !== id),
+    }));
+  },
 
-        set((state) => ({
-          products: state.products.map((product) =>
-            product.id === id ? { ...product, ...data } : product
-          ),
-        }));
-      },
+  toggleProductStatus: (id: string) => {
+    set((state) => ({
+      products: state.products.map((product) =>
+        product.id === id ? { ...product, inStock: !product.inStock } : product
+      ),
+    }));
+  },
 
-      deleteProduct: (id: string) => {
-        set((state) => ({
-          products: state.products.filter((product) => product.id !== id),
-        }));
-      },
+  getProducts: () => {
+    const { products } = get();
+    return products;
+  },
 
-      toggleProductStatus: (id: string) => {
-        set((state) => ({
-          products: state.products.map((product) =>
-            product.id === id
-              ? { ...product, inStock: !product.inStock }
-              : product
-          ),
-        }));
-      },
+  getProductById: (id: string) => {
+    const { products } = get();
+    return products.find((product) => product.id === id);
+  },
 
-      getProducts: () => {
-        const { products } = get();
-        return products;
-      },
+  getProductsByCategory: (categoryId: string) => {
+    const { products } = get();
+    return products.filter((product) => product.categoryId === categoryId);
+  },
 
-      getProductById: (id: string) => {
-        const { products } = get();
-        return products.find((product) => product.id === id);
-      },
+  getActiveProducts: () => {
+    const { products } = get();
+    return products.filter(
+      (product) => product.inStock && product.quantity > 0
+    );
+  },
 
-      getProductsByCategory: (categoryId: string) => {
-        const { products } = get();
-        return products.filter((product) => product.categoryId === categoryId);
-      },
+  getPromotionalProducts: () => {
+    const { products } = get();
+    const now = new Date();
+    return products.filter((product) => {
+      if (!product.hasPromotion) return false;
 
-      getActiveProducts: () => {
-        const { products } = get();
-        return products.filter(
-          (product) => product.inStock && product.quantity > 0
+      // Check if promotion is currently active
+      if (product.promotionStartDate && product.promotionEndDate) {
+        return (
+          now >= product.promotionStartDate && now <= product.promotionEndDate
         );
-      },
+      }
 
-      getPromotionalProducts: () => {
-        const { products } = get();
-        const now = new Date();
-        return products.filter((product) => {
-          if (!product.hasPromotion) return false;
+      return product.hasPromotion;
+    });
+  },
 
-          // Check if promotion is currently active
-          if (product.promotionStartDate && product.promotionEndDate) {
-            return (
-              now >= product.promotionStartDate &&
-              now <= product.promotionEndDate
-            );
-          }
+  searchProducts: (query: string) => {
+    const { products } = get();
+    const lowercaseQuery = query.toLowerCase();
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(lowercaseQuery) ||
+        product.description.toLowerCase().includes(lowercaseQuery) ||
+        product.category.toLowerCase().includes(lowercaseQuery)
+    );
+  },
 
-          return product.hasPromotion;
-        });
-      },
+  setLoading: (loading: boolean) => set({ isLoading: loading }),
 
-      searchProducts: (query: string) => {
-        const { products } = get();
-        const lowercaseQuery = query.toLowerCase();
-        return products.filter(
-          (product) =>
-            product.name.toLowerCase().includes(lowercaseQuery) ||
-            product.description.toLowerCase().includes(lowercaseQuery) ||
-            product.category.toLowerCase().includes(lowercaseQuery)
-        );
-      },
+  setError: (error: string | null) => set({ error }),
 
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
-
-      setError: (error: string | null) => set({ error }),
-
-      clearError: () => set({ error: null }),
-    }),
-    {
-      name: "product-store",
-      storage: createJSONStorage(() => localStorage),
-      // Avoid hydration issues by only persisting essential data
-      partialize: (state) => ({ products: state.products }),
-    }
-  )
-);
+  clearError: () => set({ error: null }),
+}));

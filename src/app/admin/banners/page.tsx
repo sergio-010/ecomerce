@@ -10,7 +10,10 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff } from "lucide-react"
 
 export default function BannersPage() {
-    const { banners, deleteBanner, toggleBannerStatus } = useBannerStore()
+    // Optimizar selectores para evitar bucles infinitos
+    const banners = useBannerStore((state) => state.banners)
+    const deleteBanner = useBannerStore((state) => state.deleteBanner)
+    const toggleBannerStatus = useBannerStore((state) => state.toggleBannerStatus)
 
     const handleDelete = (id: string) => {
         if (confirm('¿Estás seguro de que quieres eliminar este banner?')) {

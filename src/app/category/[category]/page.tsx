@@ -17,8 +17,14 @@ export default function CategoryPage() {
     const params = useParams()
     const categorySlug = params.category as string
 
-    const { getAllCategories, getCategoryBySlug } = useCategoryStore()
-    const { getProducts } = useProductStore()
+    // Optimizar selectores para evitar bucles infinitos - calcular directamente
+    const categories = useCategoryStore((state) => state.categories)
+    const products = useProductStore((state) => state.products)
+
+    // Funciones helper calculadas directamente
+    const getAllCategories = () => categories
+    const getCategoryBySlug = (slug: string) => categories.find(cat => cat.slug === slug)
+    const getProducts = () => products
 
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
     const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([])
@@ -55,7 +61,7 @@ export default function CategoryPage() {
         }
 
         setIsLoading(false)
-    }, [categorySlug, getCategoryBySlug, getAllCategories, getProducts])
+    }, [categorySlug, categories, products])
 
     // Efecto para filtrar productos
     useEffect(() => {
@@ -118,7 +124,7 @@ export default function CategoryPage() {
         })
 
         setFilteredProducts(filtered)
-    }, [currentCategory, subcategories, selectedSubcategories, priceRange, sortBy, categorySlug, getProducts, getAllCategories])
+    }, [currentCategory, subcategories, selectedSubcategories, priceRange, sortBy, categorySlug, products])
 
     const toggleSubcategoryFilter = (subcategoryId: string) => {
         setSelectedSubcategories(prev =>

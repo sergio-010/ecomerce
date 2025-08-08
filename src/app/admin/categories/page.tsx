@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff, FolderOpen } from "lucide-react"
 
 export default function CategoriesPage() {
-    const { categories, deleteCategory, getAllCategories, getChildCategories, activateAllCategories } = useCategoryStore()
+    // Optimizar selectores para evitar bucles infinitos
+    const categories = useCategoryStore((state) => state.categories)
+    const deleteCategory = useCategoryStore((state) => state.deleteCategory)
+    const activateAllCategories = useCategoryStore((state) => state.activateAllCategories)
 
     const handleDelete = (id: string) => {
         if (confirm('¿Estás seguro de que quieres eliminar esta categoría? Se eliminarán también todas las subcategorías.')) {
@@ -25,10 +28,15 @@ export default function CategoriesPage() {
         }
     }
 
-    // Mostrar todas las categorías padre (activas e inactivas) para poder gestionarlas
-    const allCategories = getAllCategories()
+    // Calcular valores derivados en el componente en lugar de usar getters del store
+    const allCategories = categories
     const parentCategories = allCategories.filter(cat => !cat.parentId).sort((a, b) => a.order - b.order)
     const inactiveCount = allCategories.filter(cat => !cat.isActive).length
+
+    // Función helper para obtener subcategorías de una categoría padre
+    const getChildCategories = (parentId: string) => {
+        return categories.filter(cat => cat.parentId === parentId).sort((a, b) => a.order - b.order)
+    }
 
     return (
         <AdminLayout>

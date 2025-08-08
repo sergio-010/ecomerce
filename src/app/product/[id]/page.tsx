@@ -7,10 +7,12 @@ import { Product } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Footer } from "@/components/public/Footer"
+import { Navbar } from "@/components/public/Navbar"
 import { useProductStore } from "@/store/product-store"
 import { useCartStore } from "@/store/cart-store"
 import { useFavoritesStore } from "@/store/favorites-store"
 import { ArrowLeft, Heart, ShoppingCart, Star, Truck, Shield, RotateCcw, Plus, Minus } from "lucide-react"
+import { formatPrice } from "@/lib/utils"
 
 export default function ProductPage() {
     const params = useParams()
@@ -21,15 +23,18 @@ export default function ProductPage() {
     const [quantity, setQuantity] = useState(1)
 
     // Stores
-    const { addItem } = useCartStore()
-    const { addToFavorites, removeFromFavorites, isFavorite } = useFavoritesStore()
+    // Optimizar selectores para evitar bucles infinitos
+    const getProductById = useProductStore((state) => state.getProductById)
+    const addItem = useCartStore((state) => state.addItem)
+    const addToFavorites = useFavoritesStore((state) => state.addToFavorites)
+    const removeFromFavorites = useFavoritesStore((state) => state.removeFromFavorites)
+    const isFavorite = useFavoritesStore((state) => state.isFavorite)
     const isProductFavorite = product ? isFavorite(product.id) : false
 
     useEffect(() => {
         // Obtener el producto real del store usando el ID
         const fetchProduct = async () => {
             try {
-                const { getProductById } = useProductStore.getState()
                 const foundProduct = getProductById(params.id as string)
 
                 if (foundProduct) {
@@ -66,7 +71,7 @@ export default function ProductPage() {
         if (params.id) {
             fetchProduct()
         }
-    }, [params.id])
+    }, [params.id, getProductById])
 
     // Validar que selectedImage esté en rango
     useEffect(() => {
@@ -139,8 +144,9 @@ export default function ProductPage() {
 
     return (
         <div className="min-h-screen bg-white">
+            <Navbar />
             {/* Header minimalista */}
-            <div className="border-b border-gray-200 sticky top-0 z-50 bg-white">
+            <div className="border-b border-gray-200 sticky top-0 z-40 bg-white">
                 <div className="max-w-6xl mx-auto px-4 py-3">
                     <div className="flex items-center justify-between">
                         <Button
@@ -245,15 +251,15 @@ export default function ProductPage() {
                             <div className="flex items-center gap-3 mb-4">
                                 {hasDiscount && (
                                     <span className="text-lg text-gray-400 line-through">
-                                        ${product.originalPrice}
+                                        {formatPrice(product.originalPrice!)}
                                     </span>
                                 )}
                                 <span className={`text-2xl font-semibold ${hasDiscount ? 'text-red-600' : 'text-gray-900'}`}>
-                                    ${product.price}
+                                    {formatPrice(product.price)}
                                 </span>
                                 {hasDiscount && (
                                     <Badge className="bg-green-50 text-green-700 text-xs px-2 py-1">
-                                        Ahorra ${(product.originalPrice! - product.price).toFixed(2)}
+                                        Ahorra {formatPrice(product.originalPrice! - product.price)}
                                     </Badge>
                                 )}
                             </div>

@@ -3,6 +3,7 @@ import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { AuthProvider } from "@/components/providers/AuthProvider"
+import { StoreProvider } from "@/components/providers/StoreProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -17,10 +18,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es">
       <body className={cn("min-h-screen bg-white text-gray-900", inter.className)}>
         <AuthProvider>
-          {children}
+          <StoreProvider>
+            {children}
+          </StoreProvider>
         </AuthProvider>
       </body>
     </html>

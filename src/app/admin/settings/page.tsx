@@ -9,10 +9,10 @@ export default function AdminSettingsPage() {
     const [settings, setSettings] = useState({
         storeName: "Mi Tienda",
         storeDescription: "La mejor tienda online",
-        currency: "USD",
-        tax: "10",
-        shippingFee: "5",
-        freeShippingThreshold: "50"
+        currency: "COP",
+        tax: "19",
+        shippingFee: "15000",
+        freeShippingThreshold: "150000"
     })
 
     const handleSave = () => {
@@ -68,6 +68,7 @@ export default function AdminSettingsPage() {
                                         onChange={(e) => handleChange("currency", e.target.value)}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     >
+                                        <option value="COP">COP ($)</option>
                                         <option value="USD">USD ($)</option>
                                         <option value="EUR">EUR (€)</option>
                                         <option value="MXN">MXN ($)</option>
@@ -110,7 +111,7 @@ export default function AdminSettingsPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Costo de envío ($)
+                                        Costo de envío (COP)
                                     </label>
                                     <input
                                         type="number"
@@ -123,7 +124,7 @@ export default function AdminSettingsPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Envío gratis desde ($)
+                                        Envío gratis desde (COP)
                                     </label>
                                     <input
                                         type="number"

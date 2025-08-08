@@ -21,8 +21,14 @@ export function CategoryForm({ category, onSuccess, trigger }: CategoryFormProps
     const [isOpen, setIsOpen] = useState(false)
     const [selectedParent, setSelectedParent] = useState<string>(category?.parentId || 'none')
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const { addCategory, updateCategory, getParentCategories } = useCategoryStore()
-    const parentCategories = getParentCategories()
+
+    // Optimizar selectores para evitar bucles infinitos
+    const categories = useCategoryStore((state) => state.categories)
+    const addCategory = useCategoryStore((state) => state.addCategory)
+    const updateCategory = useCategoryStore((state) => state.updateCategory)
+
+    // Calcular categorías padre en el componente en lugar de usar getter del store
+    const parentCategories = categories.filter(cat => !cat.parentId)
 
     const {
         register,

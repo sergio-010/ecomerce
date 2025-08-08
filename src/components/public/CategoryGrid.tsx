@@ -6,13 +6,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function CategoryGrid() {
-    const { getParentCategories } = useCategoryStore()
-    const [isHydrated, setIsHydrated] = useState(false)
+    // Optimizar selectores para evitar bucles infinitos - usar useMemo para cálculos
+    const allCategories = useCategoryStore((state) => state.categories)
+    const categories = useMemo(() => allCategories.filter(cat => !cat.parentId), [allCategories])
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: 'start',
@@ -48,12 +49,6 @@ export function CategoryGrid() {
         emblaApi.on('reInit', onSelect)
     }, [emblaApi, onSelect])
 
-    // Ensure hydration consistency
-    useEffect(() => {
-        setIsHydrated(true)
-    }, [])
-
-    const categories = getParentCategories()
     const shouldUseCarousel = categories.length > 4
 
     // Navegación por teclado
@@ -121,36 +116,6 @@ export function CategoryGrid() {
             </Card>
         </Link>
     )
-
-    // Don't render anything until hydrated to prevent hydration mismatch
-    if (!isHydrated) {
-        return (
-            <div className="w-full">
-                <div className="mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-                        Explora por Categorías
-                    </h2>
-                    <p className="text-muted-foreground text-center">
-                        Encuentra exactamente lo que buscas
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    {[1, 2, 3, 4].map((i) => (
-                        <Card key={i} className="h-full animate-pulse">
-                            <CardContent className="p-0">
-                                <div className="aspect-square bg-muted"></div>
-                                <div className="p-4">
-                                    <div className="h-6 bg-muted rounded mb-2"></div>
-                                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </div>
-        )
-    }
 
     if (categories.length === 0) {
         return null

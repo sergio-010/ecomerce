@@ -10,15 +10,19 @@ import { useCategoryStore } from "@/store/category-store"
 import { useState } from "react"
 import { Product } from "@/types"
 import Image from "next/image"
+import { formatPrice } from "@/lib/utils"
 
 export default function AdminProductsPage() {
     const [selectedProduct, setSelectedProduct] = useState<Product | undefined>()
     const [showForm, setShowForm] = useState(false)
-    const { products, deleteProduct, getProductById } = useProductStore()
-    const { getCategoryById } = useCategoryStore()
+
+    // Optimizar selectores para evitar bucles infinitos
+    const products = useProductStore((state) => state.products)
+    const deleteProduct = useProductStore((state) => state.deleteProduct)
+    const getCategoryById = useCategoryStore((state) => state.getCategoryById)
 
     const handleEdit = (id: string) => {
-        const product = getProductById(id)
+        const product = products.find(p => p.id === id)
         setSelectedProduct(product)
         setShowForm(true)
     }
@@ -130,7 +134,7 @@ export default function AdminProductsPage() {
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
                                                     <p className="font-medium">
-                                                        ${product.price.toFixed(2)}
+                                                        {formatPrice(product.price)}
                                                     </p>
                                                     {product.hasPromotion && product.promotionPercentage && (
                                                         <Badge variant="destructive" className="text-xs">
@@ -140,7 +144,7 @@ export default function AdminProductsPage() {
                                                 </div>
                                                 {product.originalPrice && product.hasPromotion && (
                                                     <p className="text-xs text-muted-foreground line-through">
-                                                        ${product.originalPrice.toFixed(2)}
+                                                        {formatPrice(product.originalPrice)}
                                                     </p>
                                                 )}
                                             </div>

@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from "react"
 import { useFavoritesStore } from "@/store/favorites-store"
 import { Navbar } from "@/components/public/Navbar"
 import { Footer } from "@/components/public/Footer"
@@ -12,29 +11,9 @@ import { useRouter } from "next/navigation"
 
 export default function FavoritesPage() {
     const router = useRouter()
-    const { favorites, isHydrated, clearFavorites } = useFavoritesStore()
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-    }, [])
-
-    // Evitar hidration mismatch
-    if (!mounted || !isHydrated) {
-        return (
-            <div className="min-h-screen bg-white">
-                <Navbar />
-                <main className="max-w-6xl mx-auto px-4 py-8">
-                    <div className="flex items-center justify-center py-16">
-                        <div className="animate-pulse">
-                            <div className="h-8 bg-gray-200 rounded mb-4 w-48"></div>
-                            <div className="h-4 bg-gray-200 rounded w-32"></div>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        )
-    }
+    // Optimizar selectores para evitar bucles infinitos
+    const favorites = useFavoritesStore((state) => state.favorites)
+    const clearFavorites = useFavoritesStore((state) => state.clearFavorites)
 
     return (
         <div className="min-h-screen bg-white">

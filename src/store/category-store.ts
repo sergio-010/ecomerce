@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type { Category, CreateCategoryData } from "@/types";
 
 interface CategoryState {
@@ -179,151 +178,139 @@ const mockCategories: Category[] = [
   },
 ];
 
-export const useCategoryStore = create<CategoryState>()(
-  persist(
-    (set, get) => ({
-      categories: mockCategories,
-      isLoading: false,
-      error: null,
+export const useCategoryStore = create<CategoryState>()((set, get) => ({
+  categories: mockCategories,
+  isLoading: false,
+  error: null,
 
-      addCategory: (data: CreateCategoryData) => {
-        const { generateSlug } = get();
-        const slug = data.slug || generateSlug(data.name);
+  addCategory: (data: CreateCategoryData) => {
+    const { generateSlug } = get();
+    const slug = data.slug || generateSlug(data.name);
 
-        const newCategory: Category = {
-          id: Date.now().toString(),
-          name: data.name,
-          slug,
-          description: data.description,
-          imageUrl: data.imageUrl,
-          isActive: data.isActive ?? true,
-          order: data.order ?? get().categories.length + 1,
-          parentId: data.parentId,
-          productCount: 0,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+    const newCategory: Category = {
+      id: Date.now().toString(),
+      name: data.name,
+      slug,
+      description: data.description,
+      imageUrl: data.imageUrl,
+      isActive: data.isActive ?? true,
+      order: data.order ?? get().categories.length + 1,
+      parentId: data.parentId,
+      productCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-        set((state) => ({
-          categories: [...state.categories, newCategory].sort(
-            (a, b) => a.order - b.order
-          ),
-        }));
-      },
+    set((state) => ({
+      categories: [...state.categories, newCategory].sort(
+        (a, b) => a.order - b.order
+      ),
+    }));
+  },
 
-      updateCategory: (id: string, data: Partial<Category>) => {
-        set((state) => ({
-          categories: state.categories
-            .map((category) =>
-              category.id === id
-                ? { ...category, ...data, updatedAt: new Date() }
-                : category
-            )
-            .sort((a, b) => a.order - b.order),
-        }));
-      },
+  updateCategory: (id: string, data: Partial<Category>) => {
+    set((state) => ({
+      categories: state.categories
+        .map((category) =>
+          category.id === id
+            ? { ...category, ...data, updatedAt: new Date() }
+            : category
+        )
+        .sort((a, b) => a.order - b.order),
+    }));
+  },
 
-      deleteCategory: (id: string) => {
-        set((state) => ({
-          categories: state.categories.filter(
-            (category) => category.id !== id && category.parentId !== id
-          ),
-        }));
-      },
+  deleteCategory: (id: string) => {
+    set((state) => ({
+      categories: state.categories.filter(
+        (category) => category.id !== id && category.parentId !== id
+      ),
+    }));
+  },
 
-      toggleCategoryStatus: (id: string) => {
-        set((state) => ({
-          categories: state.categories.map((category) =>
-            category.id === id
-              ? {
-                  ...category,
-                  isActive: !category.isActive,
-                  updatedAt: new Date(),
-                }
-              : category
-          ),
-        }));
-      },
+  toggleCategoryStatus: (id: string) => {
+    set((state) => ({
+      categories: state.categories.map((category) =>
+        category.id === id
+          ? {
+              ...category,
+              isActive: !category.isActive,
+              updatedAt: new Date(),
+            }
+          : category
+      ),
+    }));
+  },
 
-      activateAllCategories: () => {
-        set((state) => ({
-          categories: state.categories.map((category) => ({
-            ...category,
-            isActive: true,
-            updatedAt: new Date(),
-          })),
-        }));
-      },
+  activateAllCategories: () => {
+    set((state) => ({
+      categories: state.categories.map((category) => ({
+        ...category,
+        isActive: true,
+        updatedAt: new Date(),
+      })),
+    }));
+  },
 
-      reorderCategories: (categories: Category[]) => {
-        const updatedCategories = categories.map((category, index) => ({
-          ...category,
-          order: index + 1,
-          updatedAt: new Date(),
-        }));
-        set({ categories: updatedCategories });
-      },
+  reorderCategories: (categories: Category[]) => {
+    const updatedCategories = categories.map((category, index) => ({
+      ...category,
+      order: index + 1,
+      updatedAt: new Date(),
+    }));
+    set({ categories: updatedCategories });
+  },
 
-      getAllCategories: () => {
-        const { categories } = get();
-        return categories.sort((a, b) => a.order - b.order);
-      },
+  getAllCategories: () => {
+    const { categories } = get();
+    return categories.sort((a, b) => a.order - b.order);
+  },
 
-      getActiveCategories: () => {
-        const { categories } = get();
-        return categories
-          .filter((category) => category.isActive)
-          .sort((a, b) => a.order - b.order);
-      },
+  getActiveCategories: () => {
+    const { categories } = get();
+    return categories
+      .filter((category) => category.isActive)
+      .sort((a, b) => a.order - b.order);
+  },
 
-      getParentCategories: () => {
-        const { categories } = get();
-        return categories
-          .filter((category) => !category.parentId && category.isActive)
-          .sort((a, b) => a.order - b.order);
-      },
+  getParentCategories: () => {
+    const { categories } = get();
+    return categories
+      .filter((category) => !category.parentId && category.isActive)
+      .sort((a, b) => a.order - b.order);
+  },
 
-      getChildCategories: (parentId: string) => {
-        const { categories } = get();
-        return categories
-          .filter(
-            (category) => category.parentId === parentId && category.isActive
-          )
-          .sort((a, b) => a.order - b.order);
-      },
+  getChildCategories: (parentId: string) => {
+    const { categories } = get();
+    return categories
+      .filter((category) => category.parentId === parentId && category.isActive)
+      .sort((a, b) => a.order - b.order);
+  },
 
-      getCategoryById: (id: string) => {
-        const { categories } = get();
-        return categories.find((category) => category.id === id);
-      },
+  getCategoryById: (id: string) => {
+    const { categories } = get();
+    return categories.find((category) => category.id === id);
+  },
 
-      getCategoryBySlug: (slug: string) => {
-        const { categories } = get();
-        return categories.find((category) => category.slug === slug);
-      },
+  getCategoryBySlug: (slug: string) => {
+    const { categories } = get();
+    return categories.find((category) => category.slug === slug);
+  },
 
-      generateSlug: (name: string) => {
-        return name
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9\s-]/g, "")
-          .replace(/\s+/g, "-")
-          .replace(/-+/g, "-")
-          .trim();
-      },
+  generateSlug: (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  },
 
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
+  setLoading: (loading: boolean) => set({ isLoading: loading }),
 
-      setError: (error: string | null) => set({ error }),
+  setError: (error: string | null) => set({ error }),
 
-      clearError: () => set({ error: null }),
-    }),
-    {
-      name: "category-store",
-      storage: createJSONStorage(() => localStorage),
-      // Avoid hydration issues by only persisting essential data
-      partialize: (state) => ({ categories: state.categories }),
-    }
-  )
-);
+  clearError: () => set({ error: null }),
+}));

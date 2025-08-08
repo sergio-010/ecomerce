@@ -3,6 +3,8 @@ import Image from "next/image"
 import { Button } from "../ui/button"
 import { Heart, Star } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useCartStore } from "@/store/cart-store"
+import { formatPrice } from "@/lib/utils"
 
 interface ProductCardProps {
     product: Product
@@ -10,6 +12,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
     const router = useRouter()
+    const addItem = useCartStore((state) => state.addItem)
     const hasDiscount = product.originalPrice && product.originalPrice > product.price
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100) : 0
 
@@ -19,6 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.stopPropagation()
+        addItem(product)
         console.log('Producto agregado al carrito:', product)
     }
 
@@ -80,11 +84,11 @@ export function ProductCard({ product }: ProductCardProps) {
                 <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
                         <span className="text-lg font-semibold text-gray-900">
-                            ${product.price}
+                            {formatPrice(product.price)}
                         </span>
                         {hasDiscount && (
                             <span className="text-sm text-gray-400 line-through">
-                                ${product.originalPrice}
+                                {formatPrice(product.originalPrice!)}
                             </span>
                         )}
                     </div>

@@ -18,6 +18,13 @@ const users = [
     role: "user",
     password: "$2b$12$O18.gJEMoFA93UzyKtPxWuX/uv3/2EC.yKpc0kt.EqhYBYRrohL5u", // admin123
   },
+  {
+    id: "3",
+    email: "cliente@test.com",
+    name: "Cliente Demo",
+    role: "user",
+    password: "$2b$12$O18.gJEMoFA93UzyKtPxWuX/uv3/2EC.yKpc0kt.EqhYBYRrohL5u", // admin123
+  },
 ];
 
 export const authOptions: NextAuthOptions = {
@@ -101,7 +108,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/admin/login",
+    signIn: "/auth", // Cambiar a la página de auth para usuarios regulares
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",

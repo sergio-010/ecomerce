@@ -31,8 +31,10 @@ export function ProductForm({ product, onSuccess, trigger, open, onOpenChange }:
     const dialogOpen = open !== undefined ? open : isOpen
     const setDialogOpen = onOpenChange || setIsOpen
 
-    const { categories } = useCategoryStore()
-    const { addProduct, updateProduct } = useProductStore()
+    // Optimizar selectores para evitar bucles infinitos
+    const categories = useCategoryStore((state) => state.categories)
+    const addProduct = useProductStore((state) => state.addProduct)
+    const updateProduct = useProductStore((state) => state.updateProduct)
 
     // Solo categorías activas para el formulario
     const activeCategories = categories.filter(cat => cat.isActive)

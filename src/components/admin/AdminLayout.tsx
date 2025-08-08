@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
-import { LogOut, Package, Settings, Home, ImageIcon, FolderOpen } from "lucide-react"
+import { LogOut, Package, Settings, Home, ImageIcon, FolderOpen, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProtectedRoute } from "./ProtectedRoute"
 
@@ -47,6 +47,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             >
                                 <Package className="w-4 h-4 mr-3" />
                                 Productos
+                            </Link>
+
+                            <Link
+                                href="/admin/orders"
+                                className="flex items-center px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                            >
+                                <ShoppingCart className="w-4 h-4 mr-3" />
+                                Órdenes
                             </Link>
 
                             <Link

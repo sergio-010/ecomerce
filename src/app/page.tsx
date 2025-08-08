@@ -1,9 +1,9 @@
 import { getProducts } from "@/lib"
 import { ProductGrid } from "@/components/public/ProductGrid"
-import { Navbar } from "@/components/public/Navbar"
 import { HeroBanner } from "@/components/public/HeroBanner"
 import { CategoryGrid } from "@/components/public/CategoryGrid"
 import { Footer } from "@/components/public/Footer"
+import { Navbar } from "@/components/public/Navbar"
 
 export default async function Home() {
   const products = await getProducts()

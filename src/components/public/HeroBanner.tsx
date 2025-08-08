@@ -2,22 +2,16 @@
 
 import { useBannerStore } from '@/store/banner-store'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 export function HeroBanner() {
-    const { getActiveBanners } = useBannerStore()
+    // Optimizar selectores para evitar bucles infinitos - usar useMemo para cálculos
+    const allBanners = useBannerStore((state) => state.banners)
+    const banners = useMemo(() => allBanners.filter(banner => banner.isActive), [allBanners])
     const [currentIndex, setCurrentIndex] = useState(0)
-    const [isHydrated, setIsHydrated] = useState(false)
-
-    // Ensure hydration consistency
-    useEffect(() => {
-        setIsHydrated(true)
-    }, [])
-
-    const banners = getActiveBanners()
 
     useEffect(() => {
         if (banners.length <= 1) return
@@ -28,20 +22,6 @@ export function HeroBanner() {
 
         return () => clearInterval(interval)
     }, [banners.length])
-
-    // Don't render anything until hydrated to prevent hydration mismatch
-    if (!isHydrated) {
-        return (
-            <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-600 text-center">
-                    <div className="animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded mb-3 w-48 mx-auto"></div>
-                        <div className="h-4 bg-gray-200 rounded w-32 mx-auto"></div>
-                    </div>
-                </div>
-            </div>
-        )
-    }
 
     if (banners.length === 0) {
         return null

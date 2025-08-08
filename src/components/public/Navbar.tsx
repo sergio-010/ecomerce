@@ -1,27 +1,34 @@
 "use client"
 
 import Link from "next/link"
-import { Menu, ShoppingBag, Heart } from "lucide-react"
+import { Menu, ShoppingBag, Heart, Package, User, LogOut } from "lucide-react"
 import { Button } from "../ui/button"
 import { CartButton } from "./CartButton"
 import { useCategoryStore } from "@/store/category-store"
 import { useFavoritesStore } from "@/store/favorites-store"
-import { useState, useEffect } from "react"
+import { useSession, signOut } from "next-auth/react"
+import { useState, useMemo } from "react"
 
 export function Navbar() {
-    const { getParentCategories } = useCategoryStore()
-    const { favorites } = useFavoritesStore()
+    const { data: session } = useSession()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-    const [isHydrated, setIsHydrated] = useState(false)
 
-    const favoritesCount = favorites.length
+    // Stores
+    const favorites = useFavoritesStore((state) => state.favorites)
+    const categories = useCategoryStore((state) => state.categories)
 
-    // Ensure hydration consistency
-    useEffect(() => {
-        setIsHydrated(true)
-    }, [])
+    // Memoized calculations
+    const favoritesCount = useMemo(() => favorites.length, [favorites])
+    const parentCategories = useMemo(() => {
+        return categories
+            .filter((category) => !category.parentId && category.isActive)
+            .sort((a, b) => a.order - b.order)
+            .slice(0, 6)
+    }, [categories])
 
-    const categories = isHydrated ? getParentCategories().slice(0, 6) : [] // Mostrar máximo 6 categorías
+    const handleLogout = async () => {
+        await signOut({ callbackUrl: "/" })
+    }
 
     return (
         <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 shadow-sm">
@@ -36,7 +43,7 @@ export function Navbar() {
 
                 {/* Categorías - Desktop */}
                 <nav className="hidden md:flex gap-1 text-sm">
-                    {categories.map((category) => (
+                    {parentCategories.map((category) => (
                         <Link
                             key={category.id}
                             href={`/category/${category.slug}`}
@@ -57,7 +64,7 @@ export function Navbar() {
                     <Menu className="h-5 w-5" />
                 </Button>
 
-                {/* Carrito + Favoritos - Desktop */}
+                {/* Carrito + Favoritos + Órdenes + Auth - Desktop */}
                 <div className="hidden md:flex items-center gap-2">
                     <Link href="/favorites" className="relative p-2 hover:bg-muted rounded-md transition-colors">
                         <Heart className="h-5 w-5" />
@@ -67,10 +74,42 @@ export function Navbar() {
                             </span>
                         )}
                     </Link>
+                    {session && (
+                        <Link href="/orders" className="relative p-2 hover:bg-muted rounded-md transition-colors" title="Mis Órdenes">
+                            <Package className="h-5 w-5" />
+                        </Link>
+                    )}
                     <CartButton />
+
+                    {/* Auth buttons */}
+                    {session ? (
+                        <div className="flex items-center gap-2 ml-2 pl-2 border-l">
+                            <span className="text-sm text-gray-600 hidden lg:inline">
+                                Hola, {session.user?.name}
+                            </span>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleLogout}
+                                className="flex items-center gap-1"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                <span className="hidden lg:inline">Salir</span>
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 ml-2 pl-2 border-l">
+                            <Link href="/auth">
+                                <Button variant="outline" size="sm" className="flex items-center gap-1">
+                                    <User className="h-4 w-4" />
+                                    <span className="hidden lg:inline">Entrar</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
-                {/* Carrito + Favoritos - Mobile */}
+                {/* Carrito + Favoritos + Órdenes + Auth - Mobile */}
                 <div className="md:hidden flex items-center gap-1">
                     <Link href="/favorites" className="relative p-2 hover:bg-muted rounded-md transition-colors">
                         <Heart className="h-5 w-5" />
@@ -80,7 +119,31 @@ export function Navbar() {
                             </span>
                         )}
                     </Link>
+                    {session && (
+                        <Link href="/orders" className="relative p-2 hover:bg-muted rounded-md transition-colors">
+                            <Package className="h-5 w-5" />
+                        </Link>
+                    )}
                     <CartButton />
+
+                    {/* Auth button mobile */}
+                    {session ? (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleLogout}
+                            className="p-2"
+                            title="Cerrar sesión"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                    ) : (
+                        <Link href="/auth">
+                            <Button variant="ghost" size="sm" className="p-2" title="Iniciar sesión">
+                                <User className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -88,7 +151,7 @@ export function Navbar() {
             {isMobileMenuOpen && (
                 <div className="md:hidden border-t bg-background">
                     <nav className="px-4 py-3 space-y-1 max-h-96 overflow-y-auto">
-                        {categories.map((category) => (
+                        {parentCategories.map((category) => (
                             <Link
                                 key={category.id}
                                 href={`/category/${category.slug}`}

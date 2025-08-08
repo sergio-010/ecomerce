@@ -24,7 +24,10 @@ export function BannerForm({ banner, onSuccess, trigger }: BannerFormProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [imagePreview, setImagePreview] = useState(banner?.imageUrl || '')
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const { addBanner, updateBanner } = useBannerStore()
+
+    // Optimizar selectores para evitar bucles infinitos
+    const addBanner = useBannerStore((state) => state.addBanner)
+    const updateBanner = useBannerStore((state) => state.updateBanner)
 
     const {
         register,
