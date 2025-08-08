@@ -7,7 +7,6 @@ import { CategoryForm } from '@/components/admin/CategoryForm'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
 import {
     MoreVertical,
     Edit,
@@ -20,7 +19,6 @@ import {
     Settings,
     Filter
 } from 'lucide-react'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import Image from 'next/image'
 import type { Category } from '@/types'
 
@@ -52,31 +50,14 @@ export default function CategoriesPage() {
         : subCategories
 
     const handleDelete = async (category: Category) => {
-        const subcategoriesCount = subCategories.filter(sub => sub.parentId === category.id).length
-        const hasSubcategories = subcategoriesCount > 0
-
-        if (hasSubcategories) {
-            toast.error("No se puede eliminar", {
-                description: `La categoría "${category.name}" tiene ${subcategoriesCount} subcategoría${subcategoriesCount > 1 ? 's' : ''}. Elimina primero todas sus subcategorías.`
-            })
-            return
+        if (window.confirm(`¿Estás seguro de eliminar "${category.name}"?`)) {
+            try {
+                await deleteCategory(category.id)
+                setMenuOpen(null)
+            } catch (error) {
+                console.error('Error deleting category:', error)
+            }
         }
-
-        // Usar toast para confirmación con acción
-        toast(`¿Eliminar "${category.name}"?`, {
-            description: "Esta acción no se puede deshacer.",
-            action: {
-                label: "Eliminar",
-                onClick: async () => {
-                    try {
-                        await deleteCategory(category.id)
-                        setMenuOpen(null)
-                    } catch (error) {
-                        console.error('Error deleting category:', error)
-                    }
-                },
-            },
-        })
     }
 
     const handleToggleStatus = async (category: Category) => {
@@ -249,88 +230,22 @@ export default function CategoriesPage() {
                             />
                         </div>
 
-                        {/* Main Categories Table */}
+                        {/* Main Categories Grid */}
                         {mainCategories.length > 0 ? (
-                            <Card>
-                                <CardContent className="p-0">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="w-16"></TableHead>
-                                                <TableHead>Categoría</TableHead>
-                                                <TableHead>Estado</TableHead>
-                                                <TableHead>Orden</TableHead>
-                                                <TableHead>Subcategorías</TableHead>
-                                                <TableHead>Slug</TableHead>
-                                                <TableHead className="text-right">Acciones</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {mainCategories.map((category) => {
-                                                const subcategoriesCount = subCategories.filter(sub => sub.parentId === category.id).length
-                                                return (
-                                                    <TableRow key={category.id}>
-                                                        <TableCell>
-                                                            {category.image ? (
-                                                                <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
-                                                                    <Image
-                                                                        src={category.image}
-                                                                        alt={category.name}
-                                                                        fill
-                                                                        className="object-cover"
-                                                                        sizes="48px"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                                                                    <FolderOpen className="h-6 w-6 text-blue-600" />
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div>
-                                                                <div className="font-medium text-base">{category.name}</div>
-                                                                {category.description && (
-                                                                    <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                                                        {category.description}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={category.isActive ? "default" : "secondary"}>
-                                                                {category.isActive ? "Activa" : "Inactiva"}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>{category.sortOrder}</TableCell>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-1">
-                                                                <Tag className="h-4 w-4 text-green-600" />
-                                                                <span className="text-green-600 font-medium">{subcategoriesCount}</span>
-                                                                <span className="text-sm text-muted-foreground">filtros</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                                {category.slug}
-                                                            </code>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <DropdownMenu
-                                                                category={category}
-                                                                onDelete={handleDelete}
-                                                                onToggleStatus={handleToggleStatus}
-                                                                isOpen={menuOpen === category.id}
-                                                                setIsOpen={(open) => setMenuOpen(open ? category.id : null)}
-                                                            />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {mainCategories.map((category) => (
+                                    <CategoryCard
+                                        key={category.id}
+                                        category={category}
+                                        onDelete={handleDelete}
+                                        onToggleStatus={handleToggleStatus}
+                                        showSubcategoriesCount={true}
+                                        subcategoriesCount={subCategories.filter(sub => sub.parentId === category.id).length}
+                                        menuOpen={menuOpen}
+                                        setMenuOpen={setMenuOpen}
+                                    />
+                                ))}
+                            </div>
                         ) : (
                             <div className="text-center py-16">
                                 <div className="max-w-md mx-auto">
@@ -422,74 +337,22 @@ export default function CategoriesPage() {
                                 </div>
                             </div>
                         ) : filteredSubCategories.length > 0 ? (
-                            <Card>
-                                <CardContent className="p-0">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Subcategoría</TableHead>
-                                                <TableHead>Categoría Principal</TableHead>
-                                                <TableHead>Estado</TableHead>
-                                                <TableHead>Orden</TableHead>
-                                                <TableHead>Slug</TableHead>
-                                                <TableHead className="text-right">Acciones</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredSubCategories.map((subcategory) => {
-                                                const parentCategory = mainCategories.find(cat => cat.id === subcategory.parentId)
-                                                return (
-                                                    <TableRow key={subcategory.id}>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded bg-green-100 flex items-center justify-center">
-                                                                    <Tag className="h-4 w-4 text-green-600" />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-medium">{subcategory.name}</div>
-                                                                    {subcategory.description && (
-                                                                        <div className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                                                                            {subcategory.description}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {parentCategory && (
-                                                                <div className="flex items-center gap-2">
-                                                                    <FolderOpen className="h-4 w-4 text-blue-600" />
-                                                                    <span className="text-blue-700 font-medium">{parentCategory.name}</span>
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={subcategory.isActive ? "default" : "secondary"}>
-                                                                {subcategory.isActive ? "Activa" : "Inactiva"}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>{subcategory.sortOrder}</TableCell>
-                                                        <TableCell>
-                                                            <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                                {subcategory.slug}
-                                                            </code>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            <DropdownMenu
-                                                                category={subcategory}
-                                                                onDelete={handleDelete}
-                                                                onToggleStatus={handleToggleStatus}
-                                                                isOpen={menuOpen === subcategory.id}
-                                                                setIsOpen={(open) => setMenuOpen(open ? subcategory.id : null)}
-                                                            />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {filteredSubCategories.map((subcategory) => {
+                                    const parentCategory = mainCategories.find(cat => cat.id === subcategory.parentId)
+                                    return (
+                                        <SubcategoryCard
+                                            key={subcategory.id}
+                                            subcategory={subcategory}
+                                            parentCategory={parentCategory}
+                                            onDelete={handleDelete}
+                                            onToggleStatus={handleToggleStatus}
+                                            menuOpen={menuOpen}
+                                            setMenuOpen={setMenuOpen}
+                                        />
+                                    )
+                                })}
+                            </div>
                         ) : (
                             <div className="text-center py-16">
                                 <div className="max-w-md mx-auto">
@@ -518,6 +381,141 @@ export default function CategoriesPage() {
                 )}
             </div>
         </AdminLayout>
+    )
+}
+
+// Componente para tarjeta de categoría principal
+function CategoryCard({
+    category,
+    onDelete,
+    onToggleStatus,
+    showSubcategoriesCount = false,
+    subcategoriesCount = 0,
+    menuOpen,
+    setMenuOpen
+}: {
+    category: Category
+    onDelete: (category: Category) => void
+    onToggleStatus: (category: Category) => void
+    showSubcategoriesCount?: boolean
+    subcategoriesCount?: number
+    menuOpen: string | null
+    setMenuOpen: (id: string | null) => void
+}) {
+    const isMenuOpen = menuOpen === category.id
+
+    return (
+        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+            <CardContent className="p-0">
+                <div className="relative aspect-video bg-gradient-to-br from-blue-50 to-blue-100">
+                    {category.image ? (
+                        <Image
+                            src={category.image}
+                            alt={category.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center h-full">
+                            <FolderOpen className="h-12 w-12 text-blue-400" />
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-lg truncate flex-1 mr-2">{category.name}</h3>
+                        <div className="flex items-center gap-2">
+                            <Badge variant={category.isActive ? 'default' : 'secondary'} className="text-xs">
+                                {category.isActive ? 'Activa' : 'Inactiva'}
+                            </Badge>
+                            <DropdownMenu
+                                category={category}
+                                onDelete={onDelete}
+                                onToggleStatus={onToggleStatus}
+                                isOpen={isMenuOpen}
+                                setIsOpen={(open) => setMenuOpen(open ? category.id : null)}
+                            />
+                        </div>
+                    </div>
+
+                    {category.description && (
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {category.description}
+                        </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Orden: {category.sortOrder}</span>
+                        {showSubcategoriesCount && (
+                            <span className="flex items-center gap-1 text-green-600">
+                                <Tag className="h-3 w-3" />
+                                {subcategoriesCount} filtros
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
+
+// Componente para tarjeta de subcategoría
+function SubcategoryCard({
+    subcategory,
+    parentCategory,
+    onDelete,
+    onToggleStatus,
+    menuOpen,
+    setMenuOpen
+}: {
+    subcategory: Category
+    parentCategory?: Category
+    onDelete: (category: Category) => void
+    onToggleStatus: (category: Category) => void
+    menuOpen: string | null
+    setMenuOpen: (id: string | null) => void
+}) {
+    const isMenuOpen = menuOpen === subcategory.id
+
+    return (
+        <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium truncate flex-1 mr-2">{subcategory.name}</h4>
+                    <div className="flex items-center gap-2">
+                        <Badge variant={subcategory.isActive ? 'default' : 'secondary'} className="text-xs">
+                            {subcategory.isActive ? 'Activa' : 'Inactiva'}
+                        </Badge>
+                        <DropdownMenu
+                            category={subcategory}
+                            onDelete={onDelete}
+                            onToggleStatus={onToggleStatus}
+                            isOpen={isMenuOpen}
+                            setIsOpen={(open) => setMenuOpen(open ? subcategory.id : null)}
+                        />
+                    </div>
+                </div>
+
+                {parentCategory && (
+                    <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded">
+                        <FolderOpen className="h-3 w-3 text-blue-600" />
+                        <span className="text-blue-700">Filtro de: {parentCategory.name}</span>
+                    </div>
+                )}
+
+                {subcategory.description && (
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                        {subcategory.description}
+                    </p>
+                )}
+
+                <div className="text-xs text-muted-foreground">
+                    Orden: {subcategory.sortOrder}
+                </div>
+            </CardContent>
+        </Card>
     )
 }
 

@@ -46,7 +46,7 @@ export function UserAuthForm() {
         setAuthError("");
 
         try {
-            toast.loading("Iniciando sesión...", {
+            const loadingToast = toast.loading("Iniciando sesión...", {
                 description: "Verificando credenciales"
             });
 
@@ -55,6 +55,8 @@ export function UserAuthForm() {
                 password: data.password,
                 redirect: false,
             });
+
+            toast.dismiss(loadingToast);
 
             if (result?.error) {
                 toast.error("Credenciales incorrectas", {

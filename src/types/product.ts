@@ -70,4 +70,5 @@ export interface CreateProductData {
   seoTitle?: string | null;
   seoDescription?: string | null;
   categoryId: string;
+  images?: { url: string; alt?: string }[]; // Formato de objetos para la API
 }

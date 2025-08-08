@@ -9,9 +9,23 @@ export async function GET() {
         isActive: true,
       },
       include: {
+        parent: true,
+        subcategories: {
+          where: {
+            isActive: true,
+          },
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
         _count: {
           select: {
             products: {
+              where: {
+                isActive: true,
+              },
+            },
+            subcategories: {
               where: {
                 isActive: true,
               },
@@ -43,6 +57,7 @@ export async function POST(request: NextRequest) {
       image,
       isActive = true,
       sortOrder = 0,
+      parentId,
     } = await request.json();
 
     // Validar datos requeridos
@@ -51,6 +66,20 @@ export async function POST(request: NextRequest) {
         { error: "El nombre es requerido" },
         { status: 400 }
       );
+    }
+
+    // Validar que la categoría padre existe si se proporciona
+    if (parentId) {
+      const parentCategory = await prisma.category.findUnique({
+        where: { id: parentId },
+      });
+
+      if (!parentCategory) {
+        return NextResponse.json(
+          { error: "La categoría padre no existe" },
+          { status: 400 }
+        );
+      }
     }
 
     // Generar slug único
@@ -77,6 +106,11 @@ export async function POST(request: NextRequest) {
         image,
         isActive,
         sortOrder: parseInt(sortOrder) || 0,
+        parentId: parentId || null,
+      },
+      include: {
+        parent: true,
+        subcategories: true,
       },
     });
 

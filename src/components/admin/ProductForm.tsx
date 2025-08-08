@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MultipleImageUpload } from "@/components/ui/multiple-image-upload"
 import { useProductStore } from "@/store/product-store"
 import { useCategoryStore } from "@/store/category-store"
 import { useRouter } from "next/navigation"
-import type { CreateProductData, Product } from "@/types"
+import type { CreateProductData, Product, ProductImage } from "@/types"
 
 interface ProductFormProps {
     productId?: string
@@ -21,8 +22,12 @@ interface ProductFormProps {
 export function ProductForm({ productId, onClose }: ProductFormProps) {
     const router = useRouter()
     const { addProduct, updateProduct, products } = useProductStore()
-    const { categories } = useCategoryStore()
+    const { categories, fetchCategories } = useCategoryStore()
     const [isLoading, setIsLoading] = useState(false)
+
+    // Estado para las imágenes
+    const [mainImage, setMainImage] = useState('')
+    const [additionalImages, setAdditionalImages] = useState<string[]>([])
 
     const isEditing = !!productId
     const product = products.find(p => p.id === productId)
@@ -51,7 +56,13 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
     const comparePrice = watch('comparePrice')
 
     useEffect(() => {
+        // Cargar categorías al inicializar el componente
+        fetchCategories()
+    }, [fetchCategories])
+
+    useEffect(() => {
         if (product && isEditing) {
+            // Cargar datos del formulario
             reset({
                 name: product.name,
                 description: product.description || '',
@@ -69,6 +80,14 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                 seoTitle: product.seoTitle,
                 seoDescription: product.seoDescription
             })
+
+            // Cargar imágenes si están disponibles
+            const productWithImages = product as Product & { images?: ProductImage[] }
+            if (productWithImages.images && productWithImages.images.length > 0) {
+                const sortedImages = productWithImages.images.sort((a, b) => a.sortOrder - b.sortOrder)
+                setMainImage(sortedImages[0]?.url || '')
+                setAdditionalImages(sortedImages.slice(1).map(img => img.url))
+            }
         }
     }, [product, isEditing, reset])
 
@@ -76,10 +95,24 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
         setIsLoading(true)
 
         try {
+            // Combinar imagen principal con imágenes adicionales
+            const allImageUrls = mainImage ? [mainImage, ...additionalImages] : additionalImages
+
+            // Convertir URLs a formato esperado por la API
+            const images = allImageUrls.map((url, index) => ({
+                url,
+                alt: data.name || 'Imagen del producto'
+            }))
+
+            const productData = {
+                ...data,
+                images
+            }
+
             if (isEditing && productId) {
-                await updateProduct(productId, data)
+                await updateProduct(productId, productData)
             } else {
-                await addProduct(data)
+                await addProduct(productData)
             }
 
             if (onClose) {
@@ -132,6 +165,17 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                                         {...register('description')}
                                         placeholder="Descripción detallada del producto..."
                                         rows={4}
+                                    />
+                                </div>
+
+                                {/* Imágenes del producto */}
+                                <div>
+                                    <MultipleImageUpload
+                                        mainImage={mainImage}
+                                        additionalImages={additionalImages}
+                                        onMainImageChange={setMainImage}
+                                        onAdditionalImagesChange={setAdditionalImages}
+                                        maxImages={5}
                                     />
                                 </div>
 

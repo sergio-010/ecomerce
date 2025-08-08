@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { AdminLayout } from "@/components/admin/AdminLayout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,74 +8,77 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, EyeOff, Plus } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
-
-// Mock data temporal hasta que el store sea compatible
-const mockProducts = [
-    {
-        id: "1",
-        name: "iPhone 14 Pro",
-        slug: "iphone-14-pro",
-        description: "El iPhone más avanzado con chip A16 Bionic",
-        price: 999,
-        comparePrice: 1199,
-        sku: "IPH14PRO",
-        stock: 25,
-        isActive: true,
-        isFeatured: true,
-        isPromotion: false,
-        categoryId: "1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        images: [
-            {
-                id: "1",
-                url: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop&q=80",
-                alt: "iPhone 14 Pro",
-                sortOrder: 0,
-                productId: "1",
-                createdAt: new Date(),
-                updatedAt: new Date()
-            }
-        ],
-        category: {
-            id: "1",
-            name: "Electrónicos",
-            slug: "electronicos"
-        }
-    },
-    {
-        id: "2",
-        name: "Samsung Galaxy S23",
-        slug: "samsung-galaxy-s23",
-        description: "Smartphone Android de última generación",
-        price: 799,
-        comparePrice: null,
-        sku: "SAMS23",
-        stock: 0,
-        isActive: true,
-        isFeatured: false,
-        isPromotion: true,
-        categoryId: "1",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        images: [],
-        category: {
-            id: "1",
-            name: "Electrónicos",
-            slug: "electronicos"
-        }
-    }
-]
+import { useProductStore } from "@/store/product-store"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function ProductsPage() {
-    const products = mockProducts
+    const router = useRouter()
+    const { products, loading, error, fetchProducts, deleteProduct, toggleProductStatus } = useProductStore()
 
-    const handleDelete = (id: string) => {
-        console.log("Delete product:", id)
+    useEffect(() => {
+        fetchProducts()
+    }, [fetchProducts])
+
+    const handleDelete = async (id: string) => {
+        const product = products.find(p => p.id === id)
+        if (!product) return
+
+        toast(`¿Eliminar "${product.name}"?`, {
+            description: "Esta acción no se puede deshacer.",
+            action: {
+                label: "Eliminar",
+                onClick: async () => {
+                    try {
+                        await deleteProduct(id)
+                    } catch (error) {
+                        console.error("Error deleting product:", error)
+                    }
+                },
+            },
+        })
     }
 
-    const handleToggleStatus = (id: string) => {
-        console.log("Toggle product status:", id)
+    const handleToggleStatus = async (id: string) => {
+        try {
+            await toggleProductStatus(id)
+        } catch (error) {
+            console.error("Error toggling product status:", error)
+        }
+    }
+
+    const handleCreateProduct = () => {
+        router.push("/admin/products/new")
+    }
+
+    const handleEditProduct = (id: string) => {
+        router.push(`/admin/products/${id}/edit`)
+    }
+
+    if (loading) {
+        return (
+            <AdminLayout>
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+                        <p className="mt-4 text-muted-foreground">Cargando productos...</p>
+                    </div>
+                </div>
+            </AdminLayout>
+        )
+    }
+
+    if (error) {
+        return (
+            <AdminLayout>
+                <div className="flex justify-center items-center min-h-[400px]">
+                    <div className="text-center">
+                        <p className="text-red-600 mb-4">Error: {error}</p>
+                        <Button onClick={fetchProducts}>Reintentar</Button>
+                    </div>
+                </div>
+            </AdminLayout>
+        )
     }
 
     return (
@@ -87,7 +91,7 @@ export default function ProductsPage() {
                             Administra el inventario de productos de tu tienda
                         </p>
                     </div>
-                    <Button>
+                    <Button onClick={handleCreateProduct}>
                         <Plus className="mr-2 h-4 w-4" />
                         Nuevo Producto
                     </Button>
@@ -174,17 +178,9 @@ export default function ProductsPage() {
                                                 <TableCell>
                                                     <div className="flex items-center space-x-3">
                                                         <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
-                                                            {product.images && product.images.length > 0 ? (
-                                                                <img
-                                                                    className="h-full w-full object-cover"
-                                                                    src={product.images[0].url}
-                                                                    alt={product.images[0].alt || product.name}
-                                                                />
-                                                            ) : (
-                                                                <div className="h-full w-full bg-gray-200 flex items-center justify-center">
-                                                                    <span className="text-xs text-gray-500">📦</span>
-                                                                </div>
-                                                            )}
+                                                            <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+                                                                <span className="text-xs text-gray-500">📦</span>
+                                                            </div>
                                                         </div>
                                                         <div>
                                                             <div className="font-medium">{product.name}</div>
@@ -198,7 +194,7 @@ export default function ProductsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant="outline">
-                                                        {product.category?.name || 'Sin categoría'}
+                                                        Categoría {product.categoryId}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
@@ -259,7 +255,11 @@ export default function ProductsPage() {
                                                                 <Eye className="h-4 w-4" />
                                                             )}
                                                         </Button>
-                                                        <Button variant="ghost" size="sm">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleEditProduct(product.id)}
+                                                        >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                         <Button

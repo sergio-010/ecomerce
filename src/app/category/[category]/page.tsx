@@ -19,6 +19,8 @@ export default function CategoryPage() {
     const categorySlug = params.category as string
 
     const [currentCategory, setCurrentCategory] = useState<Category | null>(null)
+    const [subcategories, setSubcategories] = useState<Category[]>([])
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
     const [priceRange, setPriceRange] = useState([0, 2000])
     const [sortBy, setSortBy] = useState<string>("name")
@@ -31,26 +33,50 @@ export default function CategoryPage() {
 
     // Helper function to get category by slug
     const getCategoryBySlug = (slug: string) => {
-        return categories.find(cat => cat.slug === slug && cat.isActive) || null
+        return categories.find(cat => cat.slug === slug && cat.isActive && !cat.parentId) || null // Solo categorías principales
     }
 
-    // Cargar categoría actual
+    // Cargar categoría actual y sus subcategorías
     useEffect(() => {
         const category = getCategoryBySlug(categorySlug)
         setCurrentCategory(category)
+
+        if (category) {
+            // Obtener subcategorías (filtros) de esta categoría
+            const categorySubcategories = categories.filter(cat =>
+                cat.parentId === category.id && cat.isActive
+            ).sort((a, b) => a.sortOrder - b.sortOrder)
+            setSubcategories(categorySubcategories)
+        } else {
+            setSubcategories([])
+        }
+
+        // Reset subcategoría seleccionada
+        setSelectedSubcategory(null)
     }, [categorySlug, categories])
 
-    // Filtrar productos por categoría
+    // Filtrar productos por categoría y subcategoría
     useEffect(() => {
         if (currentCategory) {
-            const categoryProducts = products.filter(product =>
+            let categoryProducts = products.filter(product =>
                 product.categoryId === currentCategory.id && product.isActive
             )
+
+            // Si hay una subcategoría seleccionada, filtrar por tags
+            if (selectedSubcategory) {
+                const selectedSubcategoryName = subcategories.find(sub => sub.id === selectedSubcategory)?.name
+                if (selectedSubcategoryName) {
+                    categoryProducts = categoryProducts.filter(product =>
+                        product.tags?.toLowerCase().includes(selectedSubcategoryName.toLowerCase())
+                    )
+                }
+            }
+
             setFilteredProducts(categoryProducts)
         } else {
             setFilteredProducts([])
         }
-    }, [currentCategory, products])
+    }, [currentCategory, selectedSubcategory, products, subcategories])
 
     // Aplicar filtros y ordenamiento
     const applyFiltersAndSort = () => {
@@ -134,6 +160,44 @@ export default function CategoryPage() {
                     </div>
                 </div>
 
+                {/* Filtros por subcategorías (si existen) */}
+                {subcategories.length > 0 && (
+                    <div className="mb-6">
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                            <Filter className="h-5 w-5 text-gray-600" />
+                            Filtros
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                variant={selectedSubcategory === null ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedSubcategory(null)}
+                                className="rounded-full"
+                            >
+                                Todos los productos
+                            </Button>
+                            {subcategories.map((subcategory) => (
+                                <Button
+                                    key={subcategory.id}
+                                    variant={selectedSubcategory === subcategory.id ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setSelectedSubcategory(subcategory.id)}
+                                    className="rounded-full"
+                                >
+                                    {subcategory.name}
+                                </Button>
+                            ))}
+                        </div>
+                        {selectedSubcategory && (
+                            <div className="mt-2">
+                                <span className="text-sm text-muted-foreground">
+                                    Filtrado por: {subcategories.find(sub => sub.id === selectedSubcategory)?.name}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Filtros y controles */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div className="flex items-center gap-4">
@@ -209,6 +273,41 @@ export default function CategoryPage() {
                                         />
                                     </div>
                                 </div>
+
+                                {subcategories.length > 0 && (
+                                    <div>
+                                        <h3 className="font-semibold mb-3">Filtros disponibles</h3>
+                                        <div className="space-y-2">
+                                            {subcategories.map((subcategory) => (
+                                                <label key={subcategory.id} className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name="subcategory"
+                                                        checked={selectedSubcategory === subcategory.id}
+                                                        onChange={() => setSelectedSubcategory(subcategory.id)}
+                                                        className="mr-2"
+                                                    />
+                                                    <span className="text-sm">{subcategory.name}</span>
+                                                    {subcategory.description && (
+                                                        <span className="text-xs text-gray-500 ml-2">
+                                                            ({subcategory.description})
+                                                        </span>
+                                                    )}
+                                                </label>
+                                            ))}
+                                            <label className="flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="subcategory"
+                                                    checked={selectedSubcategory === null}
+                                                    onChange={() => setSelectedSubcategory(null)}
+                                                    className="mr-2"
+                                                />
+                                                <span className="text-sm">Mostrar todos</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -253,6 +352,7 @@ export default function CategoryPage() {
                                 onClick={() => {
                                     setPriceRange([0, 2000])
                                     setSortBy("name")
+                                    setSelectedSubcategory(null)
                                 }}
                             >
                                 Limpiar filtros
@@ -262,16 +362,31 @@ export default function CategoryPage() {
                 )}
 
                 {/* Categorías relacionadas */}
-                {categories.length > 1 && (
+                {categories.filter(cat => !cat.parentId && cat.isActive).length > 1 && (
                     <div className="mt-12">
                         <h2 className="text-2xl font-bold mb-6">Otras Categorías</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                             {categories.filter(cat =>
-                                cat.id !== currentCategory.id && cat.isActive
+                                cat.id !== currentCategory.id && cat.isActive && !cat.parentId // Solo categorías principales
                             ).slice(0, 6).map((category) => (
-                                <div key={category.id} className="bg-white rounded-lg shadow-sm p-4 text-center">
+                                <a
+                                    key={category.id}
+                                    href={`/category/${category.slug}`}
+                                    className="bg-white rounded-lg shadow-sm p-4 text-center hover:shadow-md transition-shadow"
+                                >
+                                    {category.image && (
+                                        <div className="relative w-full h-20 mb-2 rounded overflow-hidden">
+                                            <Image
+                                                src={category.image}
+                                                alt={category.name}
+                                                fill
+                                                className="object-cover"
+                                                sizes="120px"
+                                            />
+                                        </div>
+                                    )}
                                     <h3 className="font-semibold text-sm">{category.name}</h3>
-                                </div>
+                                </a>
                             ))}
                         </div>
                     </div>

@@ -6,8 +6,8 @@ generator client {
 
 // Configuración de base de datos
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ================================
@@ -99,6 +99,11 @@ model Category {
   isActive    Boolean @default(true)
   sortOrder   Int     @default(0)
 
+  // Subcategorías - auto-relación
+  parentId      String?
+  parent        Category?  @relation("CategorySubcategories", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategorySubcategories")
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -112,18 +117,18 @@ model Category {
 
 // Productos
 model Product {
-  id             String  @id @default(cuid())
+  id             String   @id @default(cuid())
   name           String
-  slug           String  @unique
+  slug           String   @unique
   description    String?
-  price          Float
-  comparePrice   Float?
-  sku            String? @unique
-  stock          Int     @default(0)
-  isActive       Boolean @default(true)
-  isFeatured     Boolean @default(false)
-  isPromotion    Boolean @default(false)
-  weight         Float?
+  price          Decimal  @db.Decimal(10, 2)
+  comparePrice   Decimal? @db.Decimal(10, 2)
+  sku            String?  @unique
+  stock          Int      @default(0)
+  isActive       Boolean  @default(true)
+  isFeatured     Boolean  @default(false)
+  isPromotion    Boolean  @default(false)
+  weight         Decimal? @db.Decimal(8, 2)
   dimensions     String?
   tags           String? // Stored as comma-separated string
   seoTitle       String?
@@ -167,13 +172,14 @@ model ProductImage {
 
 // Variantes de productos (tallas, colores, etc.)
 model ProductVariant {
-  id       String  @id @default(cuid())
-  name     String
-  value    String
-  price    Float?
-  stock    Int     @default(0)
-  sku      String?
-  isActive Boolean @default(true)
+  id        String   @id @default(cuid())
+  name      String
+  value     String
+  price     Decimal? @db.Decimal(10, 2)
+  stock     Int      @default(0)
+  sku       String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -195,11 +201,11 @@ model Order {
   id          String      @id @default(cuid())
   orderNumber String      @unique
   status      OrderStatus @default(PENDING)
-  subtotal    Float
-  tax         Float
-  shipping    Float
-  discount    Float       @default(0)
-  total       Float
+  subtotal    Decimal     @db.Decimal(10, 2)
+  tax         Decimal     @db.Decimal(10, 2)
+  shipping    Decimal     @db.Decimal(10, 2)
+  discount    Decimal     @default(0) @db.Decimal(10, 2)
+  total       Decimal     @db.Decimal(10, 2)
   currency    String      @default("USD")
 
   // Información de facturación y envío (JSON as string)
@@ -236,10 +242,10 @@ model Order {
 
 // Items de pedidos
 model OrderItem {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   quantity Int
-  price    Float
-  total    Float
+  price    Decimal @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
 
   // Información del producto al momento del pedido (JSON as string)
   productSnapshot String

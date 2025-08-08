@@ -1,5 +1,6 @@
 export * from "./CartButton";
 export * from "./CartSheet";
+export * from "./CategoryFilter";
 export * from "./Navbar";
 export * from "./ProductCard";
 export * from "./ProductGrid";

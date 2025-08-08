@@ -123,6 +123,7 @@ export async function PUT(
       tags,
       seoTitle,
       seoDescription,
+      images = [],
     } = data;
 
     // Verificar que el producto existe
@@ -137,34 +138,74 @@ export async function PUT(
       );
     }
 
-    // Actualizar producto
-    const updatedProduct = await prisma.product.update({
+    // Actualizar producto con transacción
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      // Si se proporcionan imágenes, eliminar las existentes
+      if (images.length > 0) {
+        await tx.productImage.deleteMany({
+          where: { productId: id },
+        });
+      }
+
+      // Actualizar producto
+      const product = await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          price: price ? parseFloat(price) : undefined,
+          comparePrice: comparePrice ? parseFloat(comparePrice) : null,
+          sku,
+          stock: stock !== undefined ? parseInt(stock) : undefined,
+          categoryId,
+          isActive,
+          isFeatured,
+          isPromotion,
+          weight: weight ? parseFloat(weight) : null,
+          dimensions,
+          tags: Array.isArray(tags) ? tags.join(",") : tags,
+          seoTitle: seoTitle || name,
+          seoDescription: seoDescription || description,
+        },
+        include: {
+          category: true,
+          images: true,
+          variants: true,
+        },
+      });
+
+      // Crear nuevas imágenes si se proporcionaron
+      if (images.length > 0) {
+        await tx.productImage.createMany({
+          data: images.map(
+            (image: { url: string; alt?: string }, index: number) => ({
+              productId: id,
+              url: image.url,
+              alt: image.alt || name,
+              sortOrder: index,
+            })
+          ),
+        });
+      }
+
+      return product;
+    });
+
+    // Obtener el producto actualizado con todas las relaciones
+    const finalProduct = await prisma.product.findUnique({
       where: { id },
-      data: {
-        name,
-        description,
-        price: price ? parseFloat(price) : undefined,
-        comparePrice: comparePrice ? parseFloat(comparePrice) : null,
-        sku,
-        stock: stock !== undefined ? parseInt(stock) : undefined,
-        categoryId,
-        isActive,
-        isFeatured,
-        isPromotion,
-        weight: weight ? parseFloat(weight) : null,
-        dimensions,
-        tags: Array.isArray(tags) ? tags.join(",") : tags,
-        seoTitle: seoTitle || name,
-        seoDescription: seoDescription || description,
-      },
       include: {
         category: true,
-        images: true,
+        images: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
         variants: true,
       },
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json(finalProduct);
   } catch (error) {
     console.error("Error updating product:", error);
     return NextResponse.json(

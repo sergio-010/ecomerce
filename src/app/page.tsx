@@ -1,4 +1,4 @@
-import { getProducts } from "@/lib"
+import { getFeaturedProducts } from "@/lib"
 import { ProductGrid } from "@/components/public/ProductGrid"
 import { HeroBanner } from "@/components/public/HeroBanner"
 import { CategoryGrid } from "@/components/public/CategoryGrid"
@@ -6,7 +6,7 @@ import { Footer } from "@/components/public/Footer"
 import { Navbar } from "@/components/public/Navbar"
 
 export default async function Home() {
-  const products = await getProducts()
+  const featuredProducts = await getFeaturedProducts()
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,18 +22,20 @@ export default async function Home() {
           <CategoryGrid />
         </section>
 
-        {/* Products Section */}
-        <section className="py-12">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
-              Productos Destacados
-            </h2>
-            <p className="text-muted-foreground text-center">
-              Descubre nuestros productos más populares
-            </p>
-          </div>
-          <ProductGrid products={products} />
-        </section>
+        {/* Products Section - Solo mostrar si hay productos destacados */}
+        {featuredProducts.length > 0 && (
+          <section className="py-12">
+            <div className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
+                Productos Destacados
+              </h2>
+              <p className="text-muted-foreground text-center">
+                Descubre nuestros productos más populares
+              </p>
+            </div>
+            <ProductGrid products={featuredProducts} />
+          </section>
+        )}
       </main>
       <Footer />
     </div>
