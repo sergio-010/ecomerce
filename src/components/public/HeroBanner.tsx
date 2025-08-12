@@ -2,7 +2,7 @@
 
 import { useBannerStore } from '@/store/banner-store'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,11 @@ export function HeroBanner() {
     const allBanners = useBannerStore((state) => state.banners)
     const banners = useMemo(() => allBanners.filter(banner => banner.isActive), [allBanners])
     const [currentIndex, setCurrentIndex] = useState(0)
+    
+    // Para gestos de deslizamiento
+    const touchStartX = useRef<number>(0)
+    const touchEndX = useRef<number>(0)
+    const minSwipeDistance = 50
 
     useEffect(() => {
         if (banners.length <= 1) return
@@ -37,14 +42,41 @@ export function HeroBanner() {
         setCurrentIndex((prev) => (prev + 1) % banners.length)
     }
 
+    // Manejar gestos de deslizamiento
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.targetTouches[0].clientX
+    }
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        touchEndX.current = e.targetTouches[0].clientX
+    }
+
+    const handleTouchEnd = () => {
+        if (!touchStartX.current || !touchEndX.current) return
+        
+        const distance = touchStartX.current - touchEndX.current
+        const isLeftSwipe = distance > minSwipeDistance
+        const isRightSwipe = distance < -minSwipeDistance
+
+        if (isLeftSwipe && banners.length > 1) {
+            goToNext()
+        }
+        if (isRightSwipe && banners.length > 1) {
+            goToPrevious()
+        }
+    }
+
     return (
         <div className="relative w-full h-[300px] md:h-[400px] overflow-hidden border border-gray-200">
             <div
-                className="w-full h-full flex items-center justify-center text-center relative"
+                className="w-full h-full flex items-center justify-center text-center relative cursor-pointer"
                 style={{
                     backgroundColor: '#f8f9fa',
                     color: '#000000'
                 }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
             >
                 {/* Background Image */}
                 {currentBanner.image && (
@@ -91,32 +123,50 @@ export function HeroBanner() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80"
+                            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80 z-20 w-12 h-12 md:w-12 md:h-12 touch-friendly banner-button mobile-button"
                             onClick={goToPrevious}
+                            onTouchStart={(e) => {
+                                e.preventDefault()
+                                goToPrevious()
+                            }}
                         >
-                            <ChevronLeft className="h-5 w-5" />
+                            <ChevronLeft className="h-6 w-6 md:h-6 md:w-6" />
                         </Button>
 
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80"
+                            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:bg-gray-100 bg-white/80 z-20 w-12 h-12 md:w-12 md:h-12 touch-friendly banner-button mobile-button"
                             onClick={goToNext}
+                            onTouchStart={(e) => {
+                                e.preventDefault()
+                                goToNext()
+                            }}
                         >
-                            <ChevronRight className="h-5 w-5" />
+                            <ChevronRight className="h-6 w-6 md:h-6 md:w-6" />
                         </Button>
                     </>
                 )}
 
                 {/* Dots Indicator */}
                 {banners.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
                         {banners.map((_, index) => (
                             <button
                                 key={index}
-                                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? 'bg-gray-800' : 'bg-gray-400'
-                                    }`}
+                                className={`w-3 h-3 rounded-full transition-all touch-friendly banner-dot mobile-button flex items-center justify-center ${
+                                    index === currentIndex ? 'bg-gray-800' : 'bg-gray-400'
+                                }`}
                                 onClick={() => setCurrentIndex(index)}
+                                onTouchStart={(e) => {
+                                    e.preventDefault()
+                                    setCurrentIndex(index)
+                                }}
+                                style={{
+                                    minWidth: '32px',
+                                    minHeight: '32px'
+                                }}
+                                aria-label={`Ir al banner ${index + 1}`}
                             />
                         ))}
                     </div>

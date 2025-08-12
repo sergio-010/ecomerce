@@ -177,4 +177,36 @@
     min-width: 0;
     flex: 0 0 auto;
   }
+
+  /* Mejoras para dispositivos móviles */
+  .touch-friendly {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .mobile-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Específico para el banner */
+  .banner-button {
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .banner-button:active {
+    transform: scale(0.95);
+  }
+
+  .banner-dot {
+    transition: all 0.2s ease;
+  }
+
+  .banner-dot:active {
+    transform: scale(1.1);
+  }
 }

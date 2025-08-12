@@ -45,7 +45,6 @@ export default function AdminLoginPage() {
                 email: data.email,
                 password: data.password,
                 redirect: false,
-                callbackUrl: "/admin/products"
             })
 
             console.log("SignIn result:", result);
@@ -54,8 +53,9 @@ export default function AdminLoginPage() {
                 console.error("Login error:", result.error);
                 setLoginError("Credenciales incorrectas. Verifica tu email y contraseña.")
             } else if (result?.ok) {
-                console.log("Login successful, redirecting...");
-                router.push("/admin/products")
+                console.log("Login successful, redirecting to admin...");
+                // Usar window.location.href para forzar una recarga completa
+                window.location.href = "/admin"
             } else {
                 console.error("Unexpected login result:", result);
                 setLoginError("Error inesperado al iniciar sesión.")

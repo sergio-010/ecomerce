@@ -4,12 +4,10 @@ import { useEffect, useState } from "react";
 import { useOrderStore } from "@/store/order-store";
 import { useProductStore } from "@/store/product-store";
 import { useCategoryStore } from "@/store/category-store";
-import { Order, OrderStatus } from "@/types/order";
+import { Order } from "@/types/order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Package, ShoppingCart, DollarSign, TrendingUp, AlertCircle, TestTube } from "lucide-react";
-import { toast } from "sonner";
+import { Package, ShoppingCart, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
 import Image from "next/image";
 
 export function AdminDashboard() {
@@ -23,79 +21,6 @@ export function AdminDashboard() {
         // Calcular todas las órdenes directamente del store
         setOrders(storeOrders);
     }, [storeOrders]);
-
-    const generateTestOrders = () => {
-        // Esta función solo está para demostrar la funcionalidad
-        // En un entorno real, las órdenes vendrían de los usuarios
-        if (products.length === 0) {
-            toast.error("No hay productos disponibles", {
-                description: "Necesitas tener productos para generar órdenes de prueba"
-            });
-            return;
-        }
-
-        const testOrders = [];
-        const statuses: OrderStatus[] = ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"];
-
-        for (let i = 0; i < 5; i++) {
-            const randomProducts = products.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 3) + 1);
-            const orderItems = randomProducts.map(product => ({
-                productId: product.id,
-                productName: product.name,
-                productImage: "/placeholder.svg", // No hay image en el nuevo schema
-                price: product.price,
-                quantity: Math.floor(Math.random() * 3) + 1,
-            }));
-
-            const totalAmount = orderItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-            const testOrder = {
-                id: `test_order_${Date.now()}_${i}`,
-                orderNumber: `ORD-${Date.now()}-${i}`,
-                userId: `test_user_${i}`,
-                subtotal: totalAmount - 20,
-                tax: 10,
-                shipping: 10,
-                discount: 0,
-                total: totalAmount,
-                currency: "USD",
-                paymentStatus: "PENDING",
-                paymentMethod: null,
-                paymentId: null,
-                shippingMethod: null,
-                trackingNumber: null,
-                estimatedDelivery: null,
-                deliveredAt: null,
-                status: randomStatus,
-                createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-                updatedAt: new Date(),
-                shippingAddress: JSON.stringify({
-                    street: `Calle Test ${i + 1}`,
-                    city: "Ciudad Test",
-                    state: "Estado Test",
-                    zipCode: `1000${i}`,
-                    country: "País Test",
-                }),
-                billingAddress: JSON.stringify({
-                    street: `Calle Test ${i + 1}`,
-                    city: "Ciudad Test",
-                    state: "Estado Test",
-                    zipCode: `1000${i}`,
-                    country: "País Test",
-                }),
-                notes: `Notas del cliente ${i + 1}`,
-                adminNotes: `Orden de prueba número ${i + 1}`,
-            };
-
-            testOrders.push(testOrder);
-        }
-
-        // Aquí normalmente agregarías las órdenes al store
-        toast.success("Órdenes de prueba generadas", {
-            description: `Se generarían ${testOrders.length} órdenes de prueba. Esta función es solo para demostrar la interfaz.`
-        });
-    };
 
     // Estadísticas de órdenes
     const orderStats = {
@@ -149,12 +74,6 @@ export function AdminDashboard() {
                     <h1 className="text-3xl font-bold">Dashboard</h1>
                     <p className="text-gray-600">Resumen general de tu negocio</p>
                 </div>
-                {orders.length === 0 && (
-                    <Button onClick={generateTestOrders} variant="outline" className="flex items-center gap-2">
-                        <TestTube className="h-4 w-4" />
-                        Generar Órdenes de Prueba
-                    </Button>
-                )}
             </div>
 
             {/* Métricas principales */}

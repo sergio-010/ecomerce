@@ -15,7 +15,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     useEffect(() => {
         if (status === "loading") return // Todavía cargando
 
-        if (!session || session.user.role !== "admin") {
+        if (!session || session.user.role?.toLowerCase() !== "admin") {
             router.push("/admin/login")
             return
         }
@@ -32,7 +32,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         )
     }
 
-    if (!session || session.user.role !== "admin") {
+    if (!session || session.user.role?.toLowerCase() !== "admin") {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
