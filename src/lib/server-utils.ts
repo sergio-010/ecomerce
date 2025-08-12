@@ -7,22 +7,29 @@ export function serializeProduct(product: any) {
     price:
       product.price instanceof Decimal
         ? product.price.toNumber()
-        : product.price,
+        : Number(product.price),
     comparePrice:
       product.comparePrice instanceof Decimal
         ? product.comparePrice.toNumber()
-        : product.comparePrice,
+        : product.comparePrice ? Number(product.comparePrice) : null,
     weight:
       product.weight instanceof Decimal
         ? product.weight.toNumber()
-        : product.weight,
+        : product.weight ? Number(product.weight) : null,
+    // Serializar relaciones
+    category: product.category ? {
+      ...product.category
+    } : null,
+    images: product.images?.map((image: any) => ({
+      ...image
+    })) || [],
     variants:
       product.variants?.map((variant: any) => ({
         ...variant,
         price:
           variant.price instanceof Decimal
             ? variant.price.toNumber()
-            : variant.price,
+            : Number(variant.price),
       })) || [],
   };
 }
