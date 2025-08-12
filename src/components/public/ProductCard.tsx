@@ -46,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
         >
             <div className="relative overflow-hidden aspect-square">
                 <Image
-                    src="/placeholder.svg"
+                    src={(product as any).images && (product as any).images.length > 0 ? (product as any).images[0].url : "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"

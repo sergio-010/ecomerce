@@ -84,59 +84,59 @@ export default function ProductsPage() {
     return (
         <AdminLayout>
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold">Gestión de Productos</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Productos</h1>
                         <p className="text-muted-foreground">
                             Administra el inventario de productos de tu tienda
                         </p>
                     </div>
-                    <Button onClick={handleCreateProduct}>
+                    <Button onClick={handleCreateProduct} className="w-full sm:w-auto">
                         <Plus className="mr-2 h-4 w-4" />
                         Nuevo Producto
                     </Button>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="text-2xl font-bold">{products.length}</div>
-                                <div className="ml-auto text-muted-foreground">Total</div>
+                                <div className="text-xl sm:text-2xl font-bold">{products.length}</div>
+                                <div className="ml-auto text-muted-foreground text-sm">Total</div>
                             </div>
                             <p className="text-xs text-muted-foreground">Productos registrados</p>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="text-2xl font-bold text-green-600">
+                                <div className="text-xl sm:text-2xl font-bold text-green-600">
                                     {products.filter(p => p.stock > 0).length}
                                 </div>
-                                <div className="ml-auto text-green-600">En Stock</div>
+                                <div className="ml-auto text-green-600 text-sm">En Stock</div>
                             </div>
                             <p className="text-xs text-muted-foreground">Productos disponibles</p>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="text-2xl font-bold text-orange-600">
+                                <div className="text-xl sm:text-2xl font-bold text-orange-600">
                                     {products.filter(p => p.stock === 0).length}
                                 </div>
-                                <div className="ml-auto text-orange-600">Agotados</div>
+                                <div className="ml-auto text-orange-600 text-sm">Agotados</div>
                             </div>
                             <p className="text-xs text-muted-foreground">Sin inventario</p>
                         </CardContent>
                     </Card>
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="text-2xl font-bold text-blue-600">
+                                <div className="text-xl sm:text-2xl font-bold text-blue-600">
                                     {products.filter(p => p.isFeatured).length}
                                 </div>
-                                <div className="ml-auto text-blue-600">Destacados</div>
+                                <div className="ml-auto text-blue-600 text-sm">Destacados</div>
                             </div>
                             <p className="text-xs text-muted-foreground">Productos destacados</p>
                         </CardContent>
@@ -159,71 +159,199 @@ export default function ProductsPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Producto</TableHead>
-                                            <TableHead>Categoría</TableHead>
-                                            <TableHead>Precio</TableHead>
-                                            <TableHead>Stock</TableHead>
-                                            <TableHead>Estado</TableHead>
-                                            <TableHead>SKU</TableHead>
-                                            <TableHead className="text-right">Acciones</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {products.map((product) => (
-                                            <TableRow key={product.id}>
-                                                <TableCell>
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
-                                                            <div className="h-full w-full bg-gray-200 flex items-center justify-center">
-                                                                <span className="text-xs text-gray-500">📦</span>
+                            <>
+                                {/* Vista de tabla para desktop */}
+                                <div className="hidden lg:block overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Producto</TableHead>
+                                                <TableHead>Categoría</TableHead>
+                                                <TableHead>Precio</TableHead>
+                                                <TableHead>Stock</TableHead>
+                                                <TableHead>Estado</TableHead>
+                                                <TableHead>SKU</TableHead>
+                                                <TableHead className="text-right">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {products.map((product) => (
+                                                <TableRow key={product.id}>
+                                                    <TableCell>
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
+                                                                <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+                                                                    <span className="text-xs text-gray-500">📦</span>
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-medium">{product.name}</div>
+                                                                {product.description && (
+                                                                    <div className="text-sm text-muted-foreground line-clamp-1">
+                                                                        {product.description}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="font-medium">{product.name}</div>
-                                                            {product.description && (
-                                                                <div className="text-sm text-muted-foreground line-clamp-1">
-                                                                    {product.description}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">
+                                                            Categoría {product.categoryId}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium">
+                                                                {formatPrice(Number(product.price))}
+                                                            </div>
+                                                            {product.comparePrice && product.isPromotion && (
+                                                                <div className="text-sm text-muted-foreground line-through">
+                                                                    {formatPrice(Number(product.comparePrice))}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">
-                                                        Categoría {product.categoryId}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <div className="font-medium">
-                                                            {formatPrice(Number(product.price))}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <div className="font-medium">{product.stock}</div>
+                                                            <Badge
+                                                                variant={product.stock > 0 ? "default" : "destructive"}
+                                                                className="text-xs"
+                                                            >
+                                                                {product.stock > 0 ? "En stock" : "Agotado"}
+                                                            </Badge>
                                                         </div>
-                                                        {product.comparePrice && product.isPromotion && (
-                                                            <div className="text-sm text-muted-foreground line-through">
-                                                                {formatPrice(Number(product.comparePrice))}
-                                                            </div>
-                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <Badge variant={product.isActive ? "default" : "secondary"}>
+                                                                {product.isActive ? "Activo" : "Inactivo"}
+                                                            </Badge>
+                                                            {product.isFeatured && (
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    Destacado
+                                                                </Badge>
+                                                            )}
+                                                            {product.isPromotion && (
+                                                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-600">
+                                                                    Promoción
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                                            {product.sku || 'Sin SKU'}
+                                                        </code>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end space-x-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleToggleStatus(product.id)}
+                                                            >
+                                                                {product.isActive ? (
+                                                                    <EyeOff className="h-4 w-4" />
+                                                                ) : (
+                                                                    <Eye className="h-4 w-4" />
+                                                                )}
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleEditProduct(product.id)}
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleDelete(product.id)}
+                                                                className="text-red-600 hover:text-red-700"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+
+                                {/* Vista de tarjetas para móvil */}
+                                <div className="lg:hidden space-y-4">
+                                    {products.map((product) => (
+                                        <Card key={product.id} className="p-4">
+                                            <div className="flex items-start space-x-3">
+                                                <div className="h-12 w-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                                                    <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+                                                        <span className="text-sm text-gray-500">📦</span>
                                                     </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <div className="font-medium">{product.stock}</div>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <h3 className="font-medium text-sm truncate pr-2">{product.name}</h3>
+                                                        <div className="flex space-x-1 flex-shrink-0">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleToggleStatus(product.id)}
+                                                                className="h-8 w-8 p-0"
+                                                            >
+                                                                {product.isActive ? (
+                                                                    <EyeOff className="h-3 w-3" />
+                                                                ) : (
+                                                                    <Eye className="h-3 w-3" />
+                                                                )}
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleEditProduct(product.id)}
+                                                                className="h-8 w-8 p-0"
+                                                            >
+                                                                <Edit className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleDelete(product.id)}
+                                                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-3 text-xs">
+                                                        <div>
+                                                            <span className="text-muted-foreground">Precio:</span>
+                                                            <div className="font-medium">
+                                                                {formatPrice(Number(product.price))}
+                                                            </div>
+                                                            {product.comparePrice && product.isPromotion && (
+                                                                <div className="text-muted-foreground line-through">
+                                                                    {formatPrice(Number(product.comparePrice))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-muted-foreground">Stock:</span>
+                                                            <div className="font-medium">{product.stock}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-1 mt-3">
+                                                        <Badge variant={product.isActive ? "default" : "secondary"} className="text-xs">
+                                                            {product.isActive ? "Activo" : "Inactivo"}
+                                                        </Badge>
                                                         <Badge
                                                             variant={product.stock > 0 ? "default" : "destructive"}
                                                             className="text-xs"
                                                         >
                                                             {product.stock > 0 ? "En stock" : "Agotado"}
-                                                        </Badge>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <Badge variant={product.isActive ? "default" : "secondary"}>
-                                                            {product.isActive ? "Activo" : "Inactivo"}
                                                         </Badge>
                                                         {product.isFeatured && (
                                                             <Badge variant="outline" className="text-xs">
@@ -236,47 +364,20 @@ export default function ProductsPage() {
                                                             </Badge>
                                                         )}
                                                     </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                                        {product.sku || 'Sin SKU'}
-                                                    </code>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end space-x-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleToggleStatus(product.id)}
-                                                        >
-                                                            {product.isActive ? (
-                                                                <EyeOff className="h-4 w-4" />
-                                                            ) : (
-                                                                <Eye className="h-4 w-4" />
-                                                            )}
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleEditProduct(product.id)}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleDelete(product.id)}
-                                                            className="text-red-600 hover:text-red-700"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
+
+                                                    {product.sku && (
+                                                        <div className="mt-2">
+                                                            <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                                                {product.sku}
+                                                            </code>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </CardContent>
                 </Card>

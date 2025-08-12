@@ -5,6 +5,7 @@ import { useOrderStore } from "@/store/order-store";
 import { useProductStore } from "@/store/product-store";
 import { useCategoryStore } from "@/store/category-store";
 import { Order } from "@/types/order";
+import { Product } from "@/types/product";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, ShoppingCart, DollarSign, TrendingUp, AlertCircle } from "lucide-react";
@@ -14,13 +15,18 @@ export function AdminDashboard() {
     // Optimizar selectores para evitar bucles infinitos
     const storeOrders = useOrderStore((state) => state.orders)
     const products = useProductStore((state) => state.products)
+    const fetchProducts = useProductStore((state) => state.fetchProducts)
     const categories = useCategoryStore((state) => state.categories)
     const [orders, setOrders] = useState<Order[]>([]);
 
     useEffect(() => {
+        // Cargar productos si no están cargados
+        if (products.length === 0) {
+            fetchProducts();
+        }
         // Calcular todas las órdenes directamente del store
         setOrders(storeOrders);
-    }, [storeOrders]);
+    }, [storeOrders, products.length, fetchProducts]);
 
     // Estadísticas de órdenes
     const orderStats = {
@@ -69,15 +75,15 @@ export function AdminDashboard() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold">Dashboard</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
                     <p className="text-gray-600">Resumen general de tu negocio</p>
                 </div>
             </div>
 
             {/* Métricas principales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Órdenes</CardTitle>
@@ -131,7 +137,7 @@ export function AdminDashboard() {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {/* Estados de órdenes */}
                 <Card>
                     <CardHeader>
@@ -188,12 +194,12 @@ export function AdminDashboard() {
                         ) : (
                             <div className="space-y-3">
                                 {recentOrders.map((order) => (
-                                    <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <div key={order.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-gray-50 rounded-lg gap-2">
                                         <div>
                                             <p className="text-sm font-medium">#{order.id.slice(-8)}</p>
                                             <p className="text-xs text-gray-600">Usuario {order.userId}</p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="flex justify-between sm:block sm:text-right">
                                             <p className="text-sm font-semibold">${order.total.toFixed(2)}</p>
                                             <Badge className={statusColors[order.status]} style={{ fontSize: '10px' }}>
                                                 {statusLabels[order.status]}
@@ -220,24 +226,27 @@ export function AdminDashboard() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {lowStockProducts.slice(0, 6).map((product) => (
-                                <div key={product.id} className="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                    <Image
-                                        src="/placeholder.svg"
-                                        alt={product.name}
-                                        width={48}
-                                        height={48}
-                                        className="object-cover rounded mr-3"
-                                    />
-                                    <div className="flex-1">
-                                        <p className="font-medium text-sm">{product.name}</p>
-                                        <p className="text-xs text-orange-600">
-                                            Stock: {product.stock} unidades
-                                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {lowStockProducts.slice(0, 6).map((product) => {
+                                const productAny = product as any;
+                                return (
+                                    <div key={product.id} className="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                        <Image
+                                            src={productAny.images && productAny.images.length > 0 ? productAny.images[0].url : "/placeholder.svg"}
+                                            alt={product.name}
+                                            width={48}
+                                            height={48}
+                                            className="object-cover rounded mr-3 flex-shrink-0"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-sm truncate">{product.name}</p>
+                                            <p className="text-xs text-orange-600">
+                                                Stock: {product.stock} unidades
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </CardContent>
                 </Card>

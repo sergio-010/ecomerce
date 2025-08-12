@@ -118,9 +118,9 @@ export default function CategoriesPage() {
         <AdminLayout>
             <div className="space-y-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold">Gestión de Categorías</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Categorías</h1>
                         <p className="text-muted-foreground">
                             Administra las categorías principales y subcategorías de tu tienda
                         </p>
@@ -128,7 +128,7 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     <Card>
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
@@ -194,8 +194,8 @@ export default function CategoriesPage() {
                         <button
                             onClick={() => setActiveTab('main')}
                             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'main'
-                                    ? 'border-blue-600 text-blue-600'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-center gap-2">
@@ -210,8 +210,8 @@ export default function CategoriesPage() {
                         <button
                             onClick={() => setActiveTab('sub')}
                             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'sub'
-                                    ? 'border-green-600 text-green-600'
-                                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                                ? 'border-green-600 text-green-600'
+                                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-center gap-2">

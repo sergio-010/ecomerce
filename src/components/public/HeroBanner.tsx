@@ -12,7 +12,7 @@ export function HeroBanner() {
     const allBanners = useBannerStore((state) => state.banners)
     const banners = useMemo(() => allBanners.filter(banner => banner.isActive), [allBanners])
     const [currentIndex, setCurrentIndex] = useState(0)
-    
+
     // Para gestos de deslizamiento
     const touchStartX = useRef<number>(0)
     const touchEndX = useRef<number>(0)
@@ -53,7 +53,7 @@ export function HeroBanner() {
 
     const handleTouchEnd = () => {
         if (!touchStartX.current || !touchEndX.current) return
-        
+
         const distance = touchStartX.current - touchEndX.current
         const isLeftSwipe = distance > minSwipeDistance
         const isRightSwipe = distance < -minSwipeDistance
@@ -154,9 +154,8 @@ export function HeroBanner() {
                         {banners.map((_, index) => (
                             <button
                                 key={index}
-                                className={`w-3 h-3 rounded-full transition-all touch-friendly banner-dot mobile-button flex items-center justify-center ${
-                                    index === currentIndex ? 'bg-gray-800' : 'bg-gray-400'
-                                }`}
+                                className={`w-3 h-3 rounded-full transition-all touch-friendly banner-dot mobile-button flex items-center justify-center ${index === currentIndex ? 'bg-gray-800' : 'bg-gray-400'
+                                    }`}
                                 onClick={() => setCurrentIndex(index)}
                                 onTouchStart={(e) => {
                                     e.preventDefault()

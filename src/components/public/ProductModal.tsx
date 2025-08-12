@@ -57,11 +57,11 @@ export function ProductModal({ product, isOpen, onClose }: Props) {
                 </div>
             }
         >
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Imagen del producto */}
-                <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden rounded-xl bg-gray-100">
+                <div className="relative w-full h-64 sm:h-80 lg:h-96 overflow-hidden rounded-xl bg-gray-100">
                     <Image
-                        src="/placeholder.svg"
+                        src={(product as any).images && (product as any).images.length > 0 ? (product as any).images[0].url : "/placeholder.svg"}
                         alt={product.name}
                         fill
                         className="object-cover"

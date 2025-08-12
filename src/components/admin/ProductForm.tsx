@@ -131,16 +131,16 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className="text-2xl sm:text-3xl font-bold">
                     {isEditing ? 'Editar Producto' : 'Crear Producto'}
                 </h1>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     {/* Información básica */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="xl:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Información Básica</CardTitle>
@@ -179,7 +179,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <Label htmlFor="sku">SKU</Label>
                                         <Input
@@ -232,7 +232,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                                 <CardTitle>Precios</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <Label htmlFor="price">Precio de Venta *</Label>
                                         <Input
@@ -281,7 +281,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                                 <CardTitle>Detalles Físicos</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <Label htmlFor="weight">Peso (kg)</Label>
                                         <Input

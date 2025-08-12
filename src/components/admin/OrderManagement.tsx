@@ -81,12 +81,12 @@ export function OrderManagement({ className }: OrderManagementProps) {
     return (
         <div className={`space-y-6 ${className}`}>
             <div>
-                <h1 className="text-3xl font-bold">Gestión de Órdenes</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Órdenes</h1>
                 <p className="text-gray-600">Administra todas las órdenes del sistema</p>
             </div>
 
             {/* Estadísticas */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 <Card>
                     <CardContent className="p-4">
                         <div className="text-center">
@@ -175,47 +175,101 @@ export function OrderManagement({ className }: OrderManagementProps) {
                             <p className="text-gray-500">No hay órdenes que coincidan con los filtros seleccionados.</p>
                         </div>
                     ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID de Orden</TableHead>
-                                    <TableHead>Cliente</TableHead>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead>Total</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
+                        <>
+                            {/* Vista de tabla para desktop */}
+                            <div className="hidden lg:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>ID de Orden</TableHead>
+                                            <TableHead>Cliente</TableHead>
+                                            <TableHead>Fecha</TableHead>
+                                            <TableHead>Total</TableHead>
+                                            <TableHead>Estado</TableHead>
+                                            <TableHead>Acciones</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredOrders.map((order) => (
+                                            <TableRow key={order.id}>
+                                                <TableCell className="font-mono text-sm">
+                                                    {order.id.slice(-8)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="font-medium">Usuario {order.userId}</p>
+                                                        <p className="text-sm text-gray-600">ID: {order.userId}</p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(order.createdAt).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    ${order.total.toFixed(2)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge className={statusColors[order.status]}>
+                                                        {statusLabels[order.status]}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-2">
+                                                        <Select
+                                                            value={order.status}
+                                                            onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                                                        >
+                                                            <SelectTrigger className="w-32">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="pending">Pendiente</SelectItem>
+                                                                <SelectItem value="confirmed">Confirmado</SelectItem>
+                                                                <SelectItem value="shipped">Enviado</SelectItem>
+                                                                <SelectItem value="delivered">Entregado</SelectItem>
+                                                                <SelectItem value="cancelled">Cancelado</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Vista de tarjetas para móvil */}
+                            <div className="lg:hidden space-y-4">
                                 {filteredOrders.map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell className="font-mono text-sm">
-                                            {order.id.slice(-8)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">Usuario {order.userId}</p>
-                                                <p className="text-sm text-gray-600">ID: {order.userId}</p>
+                                    <Card key={order.id} className="p-4">
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className="font-mono text-sm font-medium">#{order.id.slice(-8)}</p>
+                                                    <p className="text-sm text-gray-600">Usuario {order.userId}</p>
+                                                </div>
+                                                <Badge className={statusColors[order.status]}>
+                                                    {statusLabels[order.status]}
+                                                </Badge>
                                             </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            {new Date(order.createdAt).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                            ${order.total.toFixed(2)}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={statusColors[order.status]}>
-                                                {statusLabels[order.status]}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex gap-2">
+
+                                            <div className="grid grid-cols-2 gap-3 text-sm">
+                                                <div>
+                                                    <span className="text-gray-600">Fecha:</span>
+                                                    <p className="font-medium">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-600">Total:</span>
+                                                    <p className="font-medium">${order.total.toFixed(2)}</p>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="text-sm text-gray-600">Cambiar estado:</label>
                                                 <Select
                                                     value={order.status}
                                                     onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
                                                 >
-                                                    <SelectTrigger className="w-32">
+                                                    <SelectTrigger className="w-full mt-1">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -227,11 +281,11 @@ export function OrderManagement({ className }: OrderManagementProps) {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                        </TableCell>
-                                    </TableRow>
+                                        </div>
+                                    </Card>
                                 ))}
-                            </TableBody>
-                        </Table>
+                            </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

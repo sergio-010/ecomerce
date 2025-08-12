@@ -111,7 +111,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                     <CardTitle>Información de entrega</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <h4 className="font-semibold mb-2">Cliente</h4>
                             <p>Usuario {order.userId}</p>
