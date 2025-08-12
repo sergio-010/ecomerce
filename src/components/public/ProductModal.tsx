@@ -76,9 +76,9 @@ export function ProductModal({ product, isOpen, onClose }: Props) {
                 <div className="flex flex-col justify-between py-2">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <span className="text-3xl font-bold text-red-600">${product.price}</span>
+                            <span className="text-3xl font-bold text-red-600">${Number(product.price)}</span>
                             {hasDiscount && (
-                                <span className="text-lg text-gray-400 line-through">${product.comparePrice}</span>
+                                <span className="text-lg text-gray-400 line-through">${Number(product.comparePrice)}</span>
                             )}
                         </div>
 

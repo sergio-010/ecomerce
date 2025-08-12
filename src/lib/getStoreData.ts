@@ -1,5 +1,6 @@
 import { Product, StoreConfig } from "@/types";
 import { prisma } from "./prisma";
+import { serializeProduct } from "./server-utils";
 
 export async function getProducts(): Promise<Product[]> {
   try {
@@ -17,27 +18,7 @@ export async function getProducts(): Promise<Product[]> {
       },
     });
 
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      comparePrice: product.comparePrice || null,
-      sku: product.sku || "",
-      slug: product.slug,
-      description: product.description || "",
-      isActive: product.isActive,
-      isFeatured: product.isFeatured,
-      isPromotion: product.isPromotion,
-      stock: product.stock,
-      weight: product.weight || 0,
-      dimensions: product.dimensions || "",
-      tags: product.tags || "",
-      seoTitle: product.seoTitle || "",
-      seoDescription: product.seoDescription || "",
-      categoryId: product.categoryId,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-    }));
+    return products.map(serializeProduct);
   } catch (error) {
     console.error("Error fetching products:", error);
     return [];
@@ -61,27 +42,7 @@ export async function getFeaturedProducts(): Promise<Product[]> {
       },
     });
 
-    return products.map((product) => ({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      comparePrice: product.comparePrice || null,
-      sku: product.sku || "",
-      slug: product.slug,
-      description: product.description || "",
-      isActive: product.isActive,
-      isFeatured: product.isFeatured,
-      isPromotion: product.isPromotion,
-      stock: product.stock,
-      weight: product.weight || 0,
-      dimensions: product.dimensions || "",
-      tags: product.tags || "",
-      seoTitle: product.seoTitle || "",
-      seoDescription: product.seoDescription || "",
-      categoryId: product.categoryId,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-    }));
+    return products.map(serializeProduct);
   } catch (error) {
     console.error("Error fetching featured products:", error);
     return [];

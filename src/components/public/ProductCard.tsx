@@ -18,8 +18,8 @@ export function ProductCard({ product }: ProductCardProps) {
     const removeFromFavorites = useFavoritesStore((state) => state.removeFromFavorites)
     const isFavorite = useFavoritesStore((state) => state.isFavorite)
     const isProductFavorite = isFavorite(product.id)
-    const hasDiscount = product.comparePrice && product.comparePrice > product.price
-    const discountPercentage = hasDiscount ? Math.round(((product.comparePrice! - product.price) / product.comparePrice!) * 100) : 0
+    const hasDiscount = product.comparePrice && Number(product.comparePrice) > Number(product.price)
+    const discountPercentage = hasDiscount ? Math.round(((Number(product.comparePrice!) - Number(product.price)) / Number(product.comparePrice!)) * 100) : 0
 
     const handleViewProduct = () => {
         router.push(`/product/${product.id}`)
@@ -95,11 +95,11 @@ export function ProductCard({ product }: ProductCardProps) {
                 <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
                         <span className="text-lg font-semibold text-gray-900">
-                            {formatPrice(product.price)}
+                            {formatPrice(Number(product.price))}
                         </span>
                         {hasDiscount && (
                             <span className="text-sm text-gray-400 line-through">
-                                {formatPrice(product.comparePrice!)}
+                                {formatPrice(Number(product.comparePrice!))}
                             </span>
                         )}
                     </div>

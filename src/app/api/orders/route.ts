@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
+import { serializeOrder } from "@/lib/server-utils";
 
 // GET /api/orders - Obtener órdenes del usuario o todas (admin)
 export async function GET(request: NextRequest) {
@@ -71,8 +72,11 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / limit);
 
+    // Serializar órdenes para convertir Decimal a number
+    const serializedOrders = orders.map(serializeOrder);
+
     return NextResponse.json({
-      orders,
+      orders: serializedOrders,
       pagination: {
         page,
         limit,
@@ -158,17 +162,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const itemTotal = product.price * item.quantity;
+      const itemTotal = product.price.toNumber() * item.quantity;
       subtotal += itemTotal;
 
       orderItems.push({
         productId: product.id,
         quantity: item.quantity,
-        price: product.price,
+        price: product.price.toNumber(),
         total: itemTotal,
         productSnapshot: JSON.stringify({
           name: product.name,
-          price: product.price,
+          price: product.price.toNumber(),
           sku: product.sku,
         }),
       });
@@ -237,7 +241,7 @@ export async function POST(request: NextRequest) {
       return newOrder;
     });
 
-    return NextResponse.json(order, { status: 201 });
+    return NextResponse.json(serializeOrder(order), { status: 201 });
   } catch (error) {
     console.error("Error creating order:", error);
     return NextResponse.json(

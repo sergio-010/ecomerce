@@ -35,7 +35,7 @@ export function CheckoutForm() {
     const isLoading = false; // Simplificando para el build
 
     // Calcular el total directamente
-    const getTotalPrice = () => items.reduce((total, item) => total + item.quantity * item.product.price, 0)
+    const getTotalPrice = () => items.reduce((total, item) => total + item.quantity * Number(item.product.price), 0)
 
     const [shippingForm, setShippingForm] = useState<ShippingForm>({
         street: "",
@@ -269,7 +269,7 @@ export function CheckoutForm() {
                                         </div>
                                     </div>
                                     <p className="font-semibold">
-                                        {formatPrice(item.product.price * item.quantity)}
+                                        {formatPrice(Number(item.product.price) * item.quantity)}
                                     </p>
                                 </div>
                             ))}

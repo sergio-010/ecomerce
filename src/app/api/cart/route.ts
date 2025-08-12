@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-config";
+import { serializeProduct } from "@/lib/server-utils";
 
 // GET /api/cart - Obtener carrito del usuario
 export async function GET() {
@@ -42,7 +43,7 @@ export async function GET() {
 
     // Calcular totales
     const subtotal = cartItems.reduce((total, item) => {
-      return total + item.product.price * item.quantity;
+      return total + item.product.price.toNumber() * item.quantity;
     }, 0);
 
     const taxRate = 0.1; // 10% tax
@@ -50,8 +51,14 @@ export async function GET() {
     const shipping = subtotal >= 100 ? 0 : 9.99; // Free shipping over $100
     const total = subtotal + tax + shipping;
 
+    // Serializar productos para el frontend
+    const serializedCartItems = cartItems.map((item) => ({
+      ...item,
+      product: serializeProduct(item.product),
+    }));
+
     return NextResponse.json({
-      items: cartItems,
+      items: serializedCartItems,
       summary: {
         itemCount: cartItems.reduce((count, item) => count + item.quantity, 0),
         subtotal,
@@ -177,7 +184,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(cartItem, { status: 201 });
+    return NextResponse.json(
+      {
+        ...cartItem,
+        product: serializeProduct(cartItem.product),
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error adding to cart:", error);
     return NextResponse.json(

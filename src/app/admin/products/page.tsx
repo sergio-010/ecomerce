@@ -200,11 +200,11 @@ export default function ProductsPage() {
                                                 <TableCell>
                                                     <div className="space-y-1">
                                                         <div className="font-medium">
-                                                            {formatPrice(product.price)}
+                                                            {formatPrice(Number(product.price))}
                                                         </div>
                                                         {product.comparePrice && product.isPromotion && (
                                                             <div className="text-sm text-muted-foreground line-through">
-                                                                {formatPrice(product.comparePrice)}
+                                                                {formatPrice(Number(product.comparePrice))}
                                                             </div>
                                                         )}
                                                     </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { serializeProduct } from "@/lib/server-utils";
 
 // GET /api/products - Obtener productos con filtros
 export async function GET(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener productos
-    const [products, total] = await Promise.all([
+    const [rawProducts, total] = await Promise.all([
       prisma.product.findMany({
         where,
         include: {
@@ -79,6 +80,9 @@ export async function GET(request: NextRequest) {
       }),
       prisma.product.count({ where }),
     ]);
+
+    // Serializar productos para convertir Decimal a number
+    const products = rawProducts.map(serializeProduct);
 
     const totalPages = Math.ceil(total / limit);
 
@@ -207,7 +211,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(serializeProduct(product), { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
     return NextResponse.json(

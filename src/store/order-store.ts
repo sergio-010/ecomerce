@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useNotificationStore } from "./notification-store";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus } from "@/types/order";
 
 interface OrderState {
   orders: Order[];
@@ -25,7 +25,7 @@ export const useOrderStore = create<OrderState>()(
           shipping: orderData.shipping || 0,
           discount: 0,
           total: orderData.total || 0,
-          currency: "USD",
+          currency: "COP",
           billingAddress: JSON.stringify(orderData.shippingAddress || {}),
           shippingAddress: JSON.stringify(orderData.shippingAddress || {}),
           paymentStatus: "PENDING",

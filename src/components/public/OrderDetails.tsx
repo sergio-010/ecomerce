@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useOrderStore } from "@/store/order-store";
-import { Order } from "@/types";
+import { Order } from "@/types/order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,7 +98,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                                 {statusLabels[order.status as keyof typeof statusLabels]}
                             </Badge>
                             <div className="mt-2 text-2xl font-bold">
-                                {formatPrice(order.total)}
+                                {formatPrice(Number(order.total))}
                             </div>
                         </div>
                     </div>
@@ -155,7 +155,7 @@ export function OrderDetails({ orderId }: OrderDetailsProps) {
                     <div className="border-t pt-4 mt-6">
                         <div className="flex justify-between items-center text-lg font-bold">
                             <span>Total:</span>
-                            <span>{formatPrice(order.total)}</span>
+                            <span>{formatPrice(Number(order.total))}</span>
                         </div>
                     </div>
                 </CardContent>

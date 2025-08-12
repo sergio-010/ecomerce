@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useOrderStore } from "@/store/order-store";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus } from "@/types/order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

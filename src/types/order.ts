@@ -9,31 +9,40 @@ export interface OrderItem {
 }
 
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+  | "PENDING"
+  | "CONFIRMED"
+  | "PROCESSING"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "REFUNDED";
+
+export type PaymentStatus = "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
 
 export interface Order {
   id: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-  items: OrderItem[];
-  totalAmount: number;
+  orderNumber: string;
   status: OrderStatus;
-  createdAt: string;
-  updatedAt: string;
-  shippingAddress: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  phone: string;
-  notes?: string;
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  discount: number;
+  total: number;
+  currency: string;
+  billingAddress: string;
+  shippingAddress: string;
+  paymentMethod?: string | null;
+  paymentStatus: PaymentStatus;
+  paymentId?: string | null;
+  shippingMethod?: string | null;
+  trackingNumber?: string | null;
+  estimatedDelivery?: Date | null;
+  deliveredAt?: Date | null;
+  notes?: string | null;
+  adminNotes?: string | null;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateOrderData {

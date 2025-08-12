@@ -24,7 +24,10 @@ export function CartSheet({ open, onOpenChange }: Props) {
     // Calcular valores derivados directamente
     const cartItems = items
     const totalItems = items.reduce((total, item) => total + item.quantity, 0)
-    const total = items.reduce((total, item) => total + item.quantity * item.product.price, 0)
+    const total = items.reduce((total, item) => {
+        const price = Number(item.product.price);
+        return total + item.quantity * price;
+    }, 0)
 
     const handleCheckout = () => {
         onOpenChange(false) // Cerrar el sheet primero
@@ -35,7 +38,7 @@ export function CartSheet({ open, onOpenChange }: Props) {
         if (cartItems.length === 0) return "#"
         const lines = cartItems.map(
             (item) =>
-                `- ${item.quantity}x ${item.product.name} (${formatPrice(item.product.price)})`
+                `- ${item.quantity}x ${item.product.name} (${formatPrice(Number(item.product.price))})`
         )
         const totalLine = `Total: ${formatPrice(total)}`
         const message = `Hola, quiero comprar:\n${lines.join("\n")}\n${totalLine}`
@@ -110,7 +113,7 @@ export function CartSheet({ open, onOpenChange }: Props) {
                                                         {item.product.name}
                                                     </h4>
                                                     <p className="text-sm text-gray-600 mt-1">
-                                                        {formatPrice(item.product.price)} c/u
+                                                        {formatPrice(Number(item.product.price))} c/u
                                                     </p>
                                                 </div>
                                             </div>
@@ -124,7 +127,7 @@ export function CartSheet({ open, onOpenChange }: Props) {
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                                 <p className="font-bold text-gray-900 text-lg">
-                                                    {formatPrice(item.quantity * item.product.price)}
+                                                    {formatPrice(item.quantity * Number(item.product.price))}
                                                 </p>
                                             </div>
                                         </div>

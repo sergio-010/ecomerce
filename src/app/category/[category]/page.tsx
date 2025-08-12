@@ -84,16 +84,16 @@ export default function CategoryPage() {
 
         // Filtro por precio
         filtered = filtered.filter(
-            product => product.price >= priceRange[0] && product.price <= priceRange[1]
+            product => Number(product.price) >= priceRange[0] && Number(product.price) <= priceRange[1]
         )
 
         // Ordenamiento
         switch (sortBy) {
             case "price-asc":
-                filtered.sort((a, b) => a.price - b.price)
+                filtered.sort((a, b) => Number(a.price) - Number(b.price))
                 break
             case "price-desc":
-                filtered.sort((a, b) => b.price - a.price)
+                filtered.sort((a, b) => Number(b.price) - Number(a.price))
                 break
             case "name":
                 filtered.sort((a, b) => a.name.localeCompare(b.name))
@@ -321,10 +321,10 @@ export default function CategoryPage() {
                                 <h3 className="font-semibold">{product.name}</h3>
                                 <p className="text-gray-600 text-sm line-clamp-2">{product.description}</p>
                                 <div className="mt-2">
-                                    <span className="font-bold">${product.price}</span>
+                                    <span className="font-bold">${Number(product.price)}</span>
                                     {product.comparePrice && (
                                         <span className="ml-2 text-sm text-gray-500 line-through">
-                                            ${product.comparePrice}
+                                            ${Number(product.comparePrice)}
                                         </span>
                                     )}
                                 </div>

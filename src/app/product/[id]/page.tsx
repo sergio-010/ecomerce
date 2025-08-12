@@ -49,7 +49,7 @@ export default function ProductPage() {
             setProduct(productWithRelations)
         } else {
             // Mock product para desarrollo
-            const mockProduct: ProductWithRelations = {
+            const mockProduct = {
                 id: productId,
                 name: "iPhone 14 Pro",
                 slug: "iphone-14-pro",
@@ -104,7 +104,7 @@ export default function ProductPage() {
                 variants: [],
                 reviews: []
             }
-            setProduct(mockProduct)
+            setProduct(mockProduct as any)
         }
     }, [productId, products])
 
@@ -166,8 +166,8 @@ export default function ProductPage() {
                                         key={image.id}
                                         onClick={() => setSelectedImageIndex(index)}
                                         className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${index === selectedImageIndex
-                                                ? "border-blue-500"
-                                                : "border-gray-200"
+                                            ? "border-blue-500"
+                                            : "border-gray-200"
                                             }`}
                                     >
                                         <Image
@@ -208,8 +208,8 @@ export default function ProductPage() {
                                         <Star
                                             key={i}
                                             className={`w-5 h-5 ${i < 4
-                                                    ? "text-yellow-400 fill-current"
-                                                    : "text-gray-300"
+                                                ? "text-yellow-400 fill-current"
+                                                : "text-gray-300"
                                                 }`}
                                         />
                                     ))}
@@ -221,18 +221,18 @@ export default function ProductPage() {
                         <div className="space-y-2">
                             <div className="flex items-center gap-3">
                                 <span className="text-3xl font-bold text-gray-900">
-                                    ${product.price}
+                                    ${Number(product.price)}
                                 </span>
                                 {hasPromotion && (
                                     <span className="text-xl text-gray-500 line-through">
-                                        ${product.comparePrice}
+                                        ${Number(product.comparePrice)}
                                     </span>
                                 )}
                             </div>
 
                             {hasPromotion && product.comparePrice && (
                                 <div className="text-green-600 font-medium">
-                                    Ahorras ${(product.comparePrice - product.price).toFixed(2)}
+                                    Ahorras ${(Number(product.comparePrice) - Number(product.price)).toFixed(2)}
                                 </div>
                             )}
                         </div>
@@ -253,7 +253,7 @@ export default function ProductPage() {
                             </div>
                             {product.weight && (
                                 <div>
-                                    <span className="font-medium">Peso:</span> {product.weight}kg
+                                    <span className="font-medium">Peso:</span> {Number(product.weight)}kg
                                 </div>
                             )}
                             {product.dimensions && (

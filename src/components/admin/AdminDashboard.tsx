@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useOrderStore } from "@/store/order-store";
 import { useProductStore } from "@/store/product-store";
 import { useCategoryStore } from "@/store/category-store";
-import { Order, OrderStatus } from "@/types";
+import { Order, OrderStatus } from "@/types/order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,10 +47,10 @@ export function AdminDashboard() {
                 quantity: Math.floor(Math.random() * 3) + 1,
             }));
 
-            const totalAmount = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const totalAmount = orderItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
             const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
 
-            const testOrder: Order = {
+            const testOrder = {
                 id: `test_order_${Date.now()}_${i}`,
                 orderNumber: `ORD-${Date.now()}-${i}`,
                 userId: `test_user_${i}`,
@@ -110,7 +110,7 @@ export function AdminDashboard() {
     // Estadísticas de ventas
     const totalRevenue = orders
         .filter(o => o.status !== "CANCELLED")
-        .reduce((sum, order) => sum + order.total, 0);
+        .reduce((sum, order) => sum + Number(order.total), 0);
 
     const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
 
