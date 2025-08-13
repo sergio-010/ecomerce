@@ -4,24 +4,12 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Iniciando seed de la base de datos...");
+  console.log("🌱 Iniciando seed de usuarios...");
 
-  // Limpiar datos existentes (opcional)
-  await prisma.orderItem.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.cartItem.deleteMany();
-  await prisma.favoriteItem.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.productImage.deleteMany();
-  await prisma.productVariant.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.banner.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.address.deleteMany();
+  // Limpiar solo datos de usuarios y autenticación
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
-  await prisma.storeSettings.deleteMany();
 
   // 1. Crear usuarios
   console.log("👥 Creando usuarios...");
@@ -157,6 +145,20 @@ async function main() {
       seoTitle: "iPhone 15 Pro - El smartphone más avanzado",
       seoDescription: "Descubre el iPhone 15 Pro con tecnología de vanguardia",
       categoryId: createdCategories[0].id, // Smartphones
+      images: {
+        create: [
+          {
+            url: "https://images.unsplash.com/photo-1556656793-08538906a9f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+            alt: "iPhone 15 Pro",
+            sortOrder: 0,
+          },
+          {
+            url: "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+            alt: "iPhone 15 Pro vista trasera",
+            sortOrder: 1,
+          },
+        ],
+      },
     },
     {
       name: 'MacBook Pro 14"',
@@ -176,11 +178,33 @@ async function main() {
       seoTitle: 'MacBook Pro 14" - Rendimiento profesional',
       seoDescription: "MacBook Pro con chip M3 para máximo rendimiento",
       categoryId: createdCategories[1].id, // Laptops
+      images: {
+        create: [
+          {
+            url: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1226&q=80",
+            alt: "MacBook Pro 14 pulgadas",
+            sortOrder: 0,
+          },
+          {
+            url: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1587&q=80",
+            alt: "MacBook Pro abierto",
+            sortOrder: 1,
+          },
+        ],
+      },
     },
   ];
 
   const createdProducts = await Promise.all(
-    products.map((product) => prisma.product.create({ data: product }))
+    products.map((product) =>
+      prisma.product.create({
+        data: product,
+        include: {
+          images: true,
+          category: true,
+        },
+      })
+    )
   );
 
   // 4. Crear banners

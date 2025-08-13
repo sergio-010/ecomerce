@@ -73,11 +73,11 @@ export function CategoryGrid() {
     const CategoryCard = ({ category }: { category: Category }) => (
         <Link
             href={`/category/${category.slug}`}
-            className="group block flex-shrink-0"
+            className="group block flex-shrink-0 h-full"
         >
-            <Card className="h-full transition-all duration-200 hover:scale-[1.02] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-none">
-                <CardContent className="p-0">
-                    <div className="aspect-square relative overflow-hidden">
+            <Card className="h-full transition-all duration-200 hover:scale-[1.02] border border-gray-200 rounded-lg overflow-hidden bg-white shadow-none flex flex-col">
+                <CardContent className="p-0 flex flex-col h-full">
+                    <div className="aspect-square relative overflow-hidden flex-shrink-0">
                         {category.image ? (
                             <Image
                                 src={category.image}
@@ -95,18 +95,20 @@ export function CategoryGrid() {
                         )}
                     </div>
 
-                    <div className="p-4 border-t border-gray-100">
-                        <h3 className="font-semibold text-lg mb-1 text-gray-900 group-hover:text-blue-600 transition-colors">
-                            {category.name}
-                        </h3>
+                    <div className="p-4 border-t border-gray-100 flex-1 flex flex-col justify-between min-h-0">
+                        <div>
+                            <h3 className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {category.name}
+                            </h3>
 
-                        {category.description && (
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                {category.description}
-                            </p>
-                        )}
+                            {category.description && (
+                                <p className="text-sm text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                                    {category.description}
+                                </p>
+                            )}
+                        </div>
 
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 mt-auto">
                             Productos disponibles
                         </p>
                     </div>
@@ -164,7 +166,7 @@ export function CategoryGrid() {
                             {categories.map((category) => (
                                 <div
                                     key={category.id}
-                                    className="flex-shrink-0 w-64 sm:w-72 md:w-80"
+                                    className="flex-shrink-0 w-64 sm:w-72 md:w-80 h-80"
                                 >
                                     <CategoryCard category={category} />
                                 </div>
@@ -191,7 +193,9 @@ export function CategoryGrid() {
                 // Grid tradicional para 4 o menos categorías
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                     {categories.map((category) => (
-                        <CategoryCard key={category.id} category={category} />
+                        <div key={category.id} className="h-80">
+                            <CategoryCard category={category} />
+                        </div>
                     ))}
                 </div>
             )}

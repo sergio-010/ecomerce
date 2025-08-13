@@ -40,6 +40,7 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
             comparePrice: null,
             sku: '',
             categoryId: '',
+            subcategoryId: null,
             stock: 0,
             isActive: true,
             isFeatured: false,
@@ -104,8 +105,12 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                 alt: data.name || 'Imagen del producto'
             }))
 
+            // Si hay subcategoría seleccionada, usar esa como categoryId
+            const finalCategoryId = data.subcategoryId || data.categoryId
+
             const productData = {
                 ...data,
+                categoryId: finalCategoryId,
                 images
             }
 
@@ -205,23 +210,48 @@ export function ProductForm({ productId, onClose }: ProductFormProps) {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <Label htmlFor="categoryId">Categoría *</Label>
-                                    <Select onValueChange={(value) => setValue('categoryId', value)}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona una categoría" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.categoryId && (
-                                        <p className="text-sm text-red-600 mt-1">La categoría es requerida</p>
-                                    )}
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="categoryId">Categoría Principal *</Label>
+                                        <Select onValueChange={(value) => setValue('categoryId', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona una categoría" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {categories
+                                                    .filter(category => !category.parentId) // Solo categorías principales
+                                                    .map((category) => (
+                                                        <SelectItem key={category.id} value={category.id}>
+                                                            {category.name}
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {errors.categoryId && (
+                                            <p className="text-sm text-red-600 mt-1">La categoría es requerida</p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="subcategoryId">Subcategoría (Opcional)</Label>
+                                        <Select onValueChange={(value) => setValue('subcategoryId', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona una subcategoría" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {categories
+                                                    .filter(category => category.parentId === watch('categoryId'))
+                                                    .map((subcategory) => (
+                                                        <SelectItem key={subcategory.id} value={subcategory.id}>
+                                                            {subcategory.name}
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            Si seleccionas una subcategoría, el producto se clasificará bajo ella
+                                        </p>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
